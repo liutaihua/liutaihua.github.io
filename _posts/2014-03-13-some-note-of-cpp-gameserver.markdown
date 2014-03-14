@@ -15,7 +15,8 @@ c++通过swig暴露自己的API提供给python调用,  在我们的例子中生�
 
 同时在c++里还有使用Python.h开发, 使用PyObject来调用python的方法, 比如游戏rule里的on_player_entered_map等方法, 在c++里某些逻辑触发时, 会调用这些py方法.
 
-c++里构建一个观察器Observers, 估计是负责监视事件的发生. 当事件发生时(这个不确定, Observers还是EventDispatcher类负责事件), 比如: PyObserver::OnObjectAddedToWorldPostNotify  则会调用某些触发函数, 但是函数逻辑是写在python脚本里的, 所以在这里触发时, 通过PyObject Call. 当然实际源码里这中间经过一个ScriptManager的类进行的, 但最后都是在使用:
+c++里构建一个观察器Observers, 估计是负责监视事件的发生. 当事件发生时(这个不确定, Observers还是EventDispatcher类负责事件), 比如: PyObserver::OnObjectAddedToWorldPostNotify  则会调用某些触发函数, 但是函数逻辑是写在python脚本里的, 所以在这里触发时, 通过PyObject Call. 当然实际源码里这中间经过一个ScriptManager的类进行的, 但最后都是在使用:  
+
 PyObject *pFunc = _GetPythonFunc(name);
 return _CallPythonObj(pFunc, pTupleArgs);
 
@@ -34,7 +35,8 @@ Creature生物类, 是包括Player类, Monster类的父类.
 
 EventDispatcher事件调度器, 包含一个EventReceiver事件接收者, Create方法接收一个callback作为回调创建一个事件, Register方法接收一个receiver作为参数, 把事件接受者加入接受者列表, EventDispatcher也有一个Update方法, 会遍历所有事件, 如果delay时间对了, 则根据receiver回调给于的callback.
 
-GameHolder是游戏外层主循环类, 一个while True进入循环, 每秒20个frame的方式, 对GameHoler自身, GameWorld, WorldObject对象, 进行Update调用, 以更新数据, 触发事件等.
+GameHolder是游戏外层主循环类, 一个while True进入循环, 每秒20个frame的方式, 对GameHoler自身, GameWorld, WorldObject对象, 进行Update调用, 以更新数据, 触发事件等.  
+
 
 Configuration/ObjectWebFactory.cpp文件里， ObjectWebFactory类主要进行的是具体是加载玩家数据的逻辑:
     void LoadCharmOf(Player*, const ptree &) const;                             // 获取符文
@@ -44,7 +46,8 @@ Configuration/ObjectWebFactory.cpp文件里， ObjectWebFactory类主要进行�
     void LoadPassiveSkillsOf(Player*, const ptree &) const;
 
 在 void PlayerCreation方法完成后,  方法: PlayerSavingThread会为此场景里的每个玩家创建一个线程,这个线程会用来作为接下来游戏过程中的数据回存或新数据重载.
-ObjectWebFactory类里的LoadSkillsOf等方法, 实际是调用Player里的Loadxxx方法:
+ObjectWebFactory类里的LoadSkillsOf等方法, 实际是调用Player里的Loadxxx方法:  
+
 void ObjectWebFactory::LoadTechOf(Player* pPlayer, const ptree& ptTech) const
 {
     CnAssert(g_IAmMainThread);
