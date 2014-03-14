@@ -15,7 +15,7 @@ layout: default
     {% for tag in page.tags %}
     <a href="/tags.html#{{ tag }}" title="{{ tag }}">#{{ tag }}</a>
     {% endfor %}
-    <a href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/{{ page.date:"%Y-%m-%d" }}/{{ page.title }}'>编辑</a>
+    <a href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/{{ page.date | page.date:"%Y-%m-%d" }}/{{ page.title }}'>编辑</a>
   </span>
   <!-- BEGIN this would not work on any other domain -->
   <span id="like-wrapper"></span>
