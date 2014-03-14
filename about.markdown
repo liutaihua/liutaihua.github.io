@@ -17,6 +17,6 @@ mail
 
 or follow 
 
-> [@o_lll](https://twitter.com/defage)
+> [微薄](http://weibo.com/defage/)
 
 to reach me
