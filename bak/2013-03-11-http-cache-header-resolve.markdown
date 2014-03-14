@@ -1,10 +1,11 @@
----
-title: "http协议的缓存头策略"
+--
 layout: post
-guid: urn:uuid:4b73810f-ab1f-11e3-87da-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "http协议的缓存头策略"
+Date: 2013-03-11 19:33
+comments: true
+categories: notes
+--
+
 ####http协议的缓存头策略
 
 以下头均指返回给浏览器的响应头！

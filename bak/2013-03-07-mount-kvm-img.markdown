@@ -1,10 +1,11 @@
----
-title: "挂载kvm镜像"
+--
 layout: post
-guid: urn:uuid:4b734345-ab1f-11e3-93f3-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "挂载kvm镜像"
+Date: 2013-03-07 13:55
+comments: true
+categories: notes
+-- 
+
 
 kvm的guest镜像可以mount到本地
 首先使用qemu-img info  img_file查看镜像使用的文件格式, 通常默认的是raw  

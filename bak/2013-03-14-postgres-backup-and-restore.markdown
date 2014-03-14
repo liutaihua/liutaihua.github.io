@@ -1,10 +1,11 @@
----
-title: "postgres备份和恢复"
+--
 layout: post
-guid: urn:uuid:4b73abe8-ab1f-11e3-ac0b-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "postgres备份和恢复"
+Date: 2013-03-14 13:28
+comments: true
+categories: notes
+--
+
 ####备份:
 
 在postgres.conf配置里指定:

@@ -1,10 +1,11 @@
----
-title: "进程的smaps内存使用分析"
+--
 layout: post
-guid: urn:uuid:4b73eb0a-ab1f-11e3-9567-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "进程的smaps内存使用分析"
+Date: 2013-04-25 16:09
+comments: true
+categories: notes
+--
+
 
 2.6.16后的内核, 对于查看进程内存使用分布, 更方便了. 在/proc/{pid} 路径下有一个smaps文件, 记录了进程内存使用情况, 在老的内核系统上, 这个文件是maps或memap , 而且老的内核下maps或memap文件记录的数据真不是人读的.  
 

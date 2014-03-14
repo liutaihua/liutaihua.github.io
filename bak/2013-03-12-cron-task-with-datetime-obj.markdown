@@ -1,10 +1,11 @@
----
-title: "使用datetime, 构造一个cron task定期执行给定的函数方法"
+--
 layout: post
-guid: urn:uuid:4b7397b8-ab1f-11e3-90b6-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "使用datetime, 构造一个cron task定期执行给定的函数方法"
+Date: 2013-03-12 16:29
+comments: true
+categories: notes
+--
+
 使用datetime, 构造一个cron task定期执行给定的函数方法
 
 

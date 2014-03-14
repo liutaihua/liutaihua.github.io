@@ -1,10 +1,11 @@
----
-title: "nodejs的机器人hubot集成到gtalk"
+--
 layout: post
-guid: urn:uuid:4b740694-ab1f-11e3-baaa-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "nodejs的机器人hubot集成到gtalk"
+Date: 2013-04-26 16:15
+comments: true
+categories: notes
+--
+
 
 
 

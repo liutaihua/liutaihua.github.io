@@ -1,10 +1,11 @@
 ---
-title: post
+title: "flame graph可视化分析"
 layout: post
-guid: urn:uuid:4b70bc63-ab1f-11e3-ad61-040ccecf359c
+guid: urn:uuid:b87da13a-a4dd-402f-b06a-cef7eeee2d80
 tags:
-    - move from old blog
+    - linux
 ---
+
 FlameGraph的例图,解释如下:
 
 图中每一个方块代表栈里的一个函数。

@@ -1,10 +1,11 @@
----
-title: "zmq 异步消息队列"
-layout: post
-guid: urn:uuid:4b736217-ab1f-11e3-9803-040ccecf359c
-tags:
-    - move from old blog
----
+--
+Date: 2013-03-07 16:47
+Title: "zmq 异步消息队列"
+Published: true  
+Type: post  
+Excerpt:   
+--
+
 ####zmq  push--pull 方式
 
 **在ZMQ中是淡化服务端和客户端的概念的**:

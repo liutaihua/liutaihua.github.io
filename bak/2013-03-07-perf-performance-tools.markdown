@@ -1,10 +1,11 @@
----
-title: "perf  sched  收集和分析调度相关数据"
-layout: post
-guid: urn:uuid:4b73533d-ab1f-11e3-8e96-040ccecf359c
-tags:
-    - move from old blog
----
+--
+Date: 2013-03-07 15:11
+Title: "perf  sched  收集和分析调度相关数据"
+Published: true  
+Type: post  
+Excerpt:   
+--
+
 
 
 1,通常用到 perf sched  record  收集系统相关的调度数据, 然后使用pert ached   latency  --sort max 来打印出收集到的信息,perf sched  latency  --sort  max 展现的数据中各个column的含义如下:

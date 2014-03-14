@@ -1,10 +1,11 @@
----
-title: "pptp做vpn, 连接到内网直接能访问内网IP"
-layout: post
-guid: urn:uuid:4b73339c-ab1f-11e3-bb56-040ccecf359c
-tags:
-    - move from old blog
----
+--
+Date: 2013-02-19 11:33 
+Title: "pptp做vpn, 连接到内网直接能访问内网IP"
+Published: true  
+Type: post  
+Excerpt: 
+--
+
 pptp服务器:
 
 pptp下发下去的ip网段: 10.168.0.0/24 

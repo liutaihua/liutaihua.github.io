@@ -1,10 +1,11 @@
----
-title: "hubot增加announce方式做广播消息"
+--
 layout: post
-guid: urn:uuid:4b742e4f-ab1f-11e3-aa67-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "hubot增加announce方式做广播消息"
+Date: 2013-04-29 11:40
+comments: true
+categories: notes
+--
+
 hubot的announce通知所有在线联系人
 
 hubot在使用挂接到其他平台时, 是支持room的方式了, 这样就支持了由一个用户发送announce通知所有在线联系人的方式了.  

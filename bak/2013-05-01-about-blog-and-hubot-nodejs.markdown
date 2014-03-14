@@ -1,10 +1,11 @@
----
-title: "五一随聊"
+--
 layout: post
-guid: urn:uuid:4b7444a6-ab1f-11e3-a134-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "五一随聊"
+Date: 2013-05-01 08:19
+comments: true
+categories: notes
+--
+
 <img src='http://ww1.sinaimg.cn/large/793bee10jw1e47srugr8aj20e509sjsi.jpg'>
 
 五一非常无聊的在家呆着, 最近在google资料时, 查到的一些技术blog, 发现好多都在github里, 也就是好多人都把github当作保存技术文章的的管理器, 然后用比如Markdown等语法形式写, 自己弄个简单的程序读出来, 展示就可以变成一个基本的blog站点了.  

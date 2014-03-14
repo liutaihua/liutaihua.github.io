@@ -1,10 +1,11 @@
----
-title: "使用rsyslog的template功能"
+--
 layout: post
-guid: urn:uuid:4b73b78c-ab1f-11e3-b438-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "使用rsyslog的template功能"
+Date: 2013-04-07 18:00
+comments: true
+categories: notes
+--
+
 #####rsyslog的一个高级点的用法, 根据programname做日志文件分离, 使用template功能根据系统时间切割日志文件:
 
 <pre>

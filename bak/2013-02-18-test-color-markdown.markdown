@@ -1,10 +1,11 @@
----
-title: "test"
+--
 layout: post
-guid: urn:uuid:4b73288c-ab1f-11e3-b66b-040ccecf359c
-tags:
-    - move from old blog
----# <font color="green"> 测试markdown文字颜色 </font>
+Title: "test"
+Date: 2012-01-24 22:55
+comments: true
+categories: notes
+--
+# <font color="green"> 测试markdown文字颜色 </font>
 
 
 很明显颜色不错的嘛

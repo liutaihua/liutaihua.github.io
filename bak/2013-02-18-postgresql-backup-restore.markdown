@@ -1,10 +1,11 @@
 ---
-title: post
+title: pg的backup和restore
 layout: post
-guid: urn:uuid:4b730ef5-ab1f-11e3-bef0-040ccecf359c
+guid: urn:uuid:dc1595e5-2297-484a-8688-6808d8f12e51
 tags:
-    - move from old blog
-------
+  - postgres
+  - db
+---
 
 
 有2种方式可以实现backup

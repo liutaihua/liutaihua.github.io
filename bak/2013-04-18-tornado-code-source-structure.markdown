@@ -1,10 +1,11 @@
----
-title: "tornado源码查看-代码结构和请求流向"
+--
 layout: post
-guid: urn:uuid:4b73d4b3-ab1f-11e3-a275-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "tornado源码查看-代码结构和请求流向"
+Date: 2013-04-25 13:43
+comments: true
+categories: notes
+--
+
 
 
 

@@ -1,10 +1,11 @@
----
-title: "整数转换成对应2进制位整数和的集合"
+--
 layout: post
-guid: urn:uuid:4b73c2ba-ab1f-11e3-b62c-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "整数转换成对应2进制位整数和的集合"
+Date: 2013-04-18 14:00
+comments: true
+categories: notes
+--
+
 说起来题目比较拗口, 比较常见到的是IP地址, 由8个2进制位, 转换成十进制最大为255, 这都知道. 
 
 

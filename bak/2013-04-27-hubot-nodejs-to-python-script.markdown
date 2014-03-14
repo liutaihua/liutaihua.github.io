@@ -1,10 +1,11 @@
----
-title: "为hubot机器人脚本增加python扩展"
+--
 layout: post
-guid: urn:uuid:4b74198f-ab1f-11e3-b17a-040ccecf359c
-tags:
-    - move from old blog
----
+Title: "为hubot机器人脚本增加python扩展"
+Date: 2013-04-27 13:33
+comments: true
+categories: notes
+--
+
 
 为hubot机器人脚本增加python扩展
 
