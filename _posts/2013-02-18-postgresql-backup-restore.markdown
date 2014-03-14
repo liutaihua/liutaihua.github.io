@@ -1,10 +1,11 @@
---
-Date: 2013-02-18 18:40
-Title: "pg的backup和restore"
-Published: true  
-Type: post  
-Excerpt:   
---
+---
+title: pg的backup和restore
+layout: post
+guid: urn:uuid:dc1595e5-2297-484a-8688-6808d8f12e51
+tags:
+  - postgres
+  - db
+---
 
 
 有2种方式可以实现backup
