@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="liutaihua" />
+    
+    <title>为hubot机器人脚本增加python扩展</title>
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link href="/atom.xml" rel="alternate" title="yeah, the stuff" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/github.css">
+    <link rel="stylesheet" href="/media/css/fontawesome.css">
+    <script src="/media/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script> 
+    <script type="text/javascript" src="/media/js/highlight.pack.js"></script>
+    <script type="text/javascript">
+      hljs.initHighlightingOnLoad();
+    </script>
+  </head>
+  <body>
+      <div id="main" role="main">
+        <header>
+          <div id="header">
+            <h1><a title="yeah, the stuff" class="" href="/">yeah, the stuff</a></h1>
+          </div>
+          <nav>
+            
+            <span><a title="Archive" href="/archive.html"><i class="fa fa-list-ul"></i></a></span>
+            
+            <span><a title="Tags" href="/tags.html"><i class="fa fa-tags"></i></a></span>
+            
+            <span><a title="About" href="/about.html"><i class="fa fa-user"></i></a></span>
+            
+            <span><a title="Gallery" href="http://www.flickr.com/photos/liutaihua/"><i class="fa fa-film"></i></a></span>
+            
+            <span><a title="Blogroll" href="/links.html"><i class="fa fa-link"></i></a></span>
+            
+            <span><a title="Subscribe" href="/atom.xml"><i class="fa fa-rss"></i></a></span>
+            
+          </nav>
+        </header>
+        <div id="content">
+        <article>
+  <section class="title">
+    <h2>为hubot机器人脚本增加python扩展 </h2>
+  </section>
+  <section class="meta">
+  <span class="time">
+    <time datetime="2013-04-27">2013-04-27</time>
+  </span>
+  
+  <span class="tags">
+    
+    <a href="/tags.html#move from old blog" title="move from old blog">#move from old blog</a>
+    
+    <a href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/2013-04-27-为hubot机器人脚本增加python扩展.markdown'>编辑</a>
+  </span>
+  <!-- BEGIN this would not work on any other domain -->
+  <span id="like-wrapper"></span>
+  <script type="text/javascript">
+    var like_shortname      = 'gopherwood';
+    var like_identifier     = 'urn:uuid:4b74198f-ab1f-11e3-b17a-040ccecf359c';
+    var like_like_btn       = '&#xf087;';
+    var like_unlike_btn     = '&#xf087;';
+    var like_disable_unlike = true;
+
+    var l = document.createElement('script'); l.type = 'text/javascript'; l.async = true;
+    l.src = 'https://like-waynezhang.rhcloud.com/javascript/widget.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(l);
+  </script>
+  <!-- END this would not work on any other domain -->
+  
+  </section>
+  <section class="post">
+  <p>为hubot机器人脚本增加python扩展</p>
+
+<p>昨天顺利把hubot跑起来了, 能回答了. 也通过nodejs的exec命令执行shell的方式, 将消息以参数的形式传给process.py处理, 以形成用py写脚本的形式.<br/>
+不过上面方式有缺陷:<br/>
+1, nodejs不是真正的调用py, 同时py执行的返回或直接print或写stdout(print在某种程度上就是stdout), 然后nodejs什么都不用干, 就直接相当于把stdout使用msg.send回复给gtalk了.<br/>
+2, 整体结构不优美, nojs跟py还得靠exec执行shell的形式, 这种调用方式挺丑陋.</p>
+
+<p>在github上找到一个脚本, 也是为了用python来写hubot的脚本, 实现方式也是用stdout和stdin结合, 达到nodejs收到gtalk消息后, 将消息传给py处理. 拿来后, 又做了一些修改, 具体过程是:</p>
+
+<p><strong>* 封装一个Python 类, 接收stdin, 输出stdout.<br/>
+* 在nodejs里启动这个py类的listen监听stdin, robot收到消息时write到stdin, <br/>
+* py从stdin中读到消息, 交给指定的handler<br/>
+* handler处理完成后, 输出stdout, 同时触发nodejs的event, 读取stdout通过robot发送回馈信息.  </strong></p>
+
+<p>pyscript.coffee脚本如下:</p>
+
+<pre>
+class PythonScript
+
+    pyScriptPath = __dirname + '/test.py'
+    python_script = require('child_process').spawn('python', [pyScriptPath])
+    python_script.stdout.on 'data', (data) =>
+        receive_from_python(data.toString())
+
+    module.exports = (robot) ->
+        @robot = robot
+        #robot.respond /(.*)/i, (msg) ->
+        #    newRegex = new RegExp("^[@]?#{robot.name}[:,]? ?(.*)", 'i')
+        #    match = newRegex.exec msg.message.text
+        #    send_to_python(match[1], msg.message.room, 'respond')
+        #    @robot.msg = msg
+
+        robot.hear /(.*)/i, (msg) ->
+            send_to_python(msg.message.text, msg.message.room, 'hear')
+            @robot.msg = msg
+
+    send_to_python = (message, room, method) ->
+        dict =
+            type : method,
+            message : message,
+            room : room
+        python_script.stdin.write(JSON.stringify(dict) + '\n')
+        console.log JSON.stringify(dict)
+
+    receive_from_python = (json) ->
+        data = JSON.parse(json)
+        #@robot.messageRoom data.room, data.message # 恶心的问题, data.room在send_to_python调用传的参数msg.message.room是undefined, 导致这里不能这样用
+        @robot.msg.send data.message   # 于是在入口的地方直接把msg对象赋给@robot里的, 在这里就能夸函数调用msg.send了.
+
+</pre>
+
+
+<p>PythonScript类封装如下: hubot_script.py</p>
+
+<pre>
+handlers = [
+    (r'/hubot/sys/(.*)', syscmdhandler),
+    (r'/hubot/chat/(.*)', chathandler),
+]
+
+class HubotScript:
+    def __init__(self):
+        self.start_listening()
+
+    # 创建一个listen, 监听标准输入, 有输入时执行后面逻辑
+    def start_listening(self):
+        while True:
+            line = sys.stdin.readline()
+            self.receive(line)
+
+    def receive(self, json_str):
+        # 这里一定需要捕获错误, 否则出错会直接跳出 start_listening中的循环, 监听就结束了
+        try:
+            json_dict = json.loads(json_str)
+            json_dict['message'] = '/' + '/'.join(json_dict['message'].split(' ')) # 搞成类似url的形式, 方便handlers里的regex匹配
+            self.dispatch(json_dict)
+        except Exception, e:
+            print e
+
+    def send(self, message):
+        if message:
+            #print json.dumps(message)
+            sys.stdout.write(json.dumps(message) + '\n')
+            sys.stdout.flush()
+
+    # Message Dispatch
+    def dispatch(self, json_dict):
+        #msg_type = json_dict['type']
+        #if msg_type == 'hear':
+        #    self.dispatch_generic(json_dict, _hear_handlers)
+        #elif msg_type == 'respond':
+        #    self.dispatch_generic(json_dict, _resp_handlers)
+        self.dispatch_generic(json_dict, handlers)
+        
+    def dispatch_generic(self, message, regexes):
+        for regex, handler in regexes:
+            p = re.match(regex, message['message'])
+            if p:
+                action = ' '.join(p.groups()[0].split('/'))
+                response = message
+                #response_text = handler(self, message)
+                response_text = handler(self, action)
+                if response_text:
+                    if len(response_text) > 3000: # nodejs的JSON.parse不能处理太长的str
+                        response_text = response_text[:3000]
+                    response['message'] = response_text
+                    self.send(response)
+def hear(regex): # 测试用decorator
+    def decorator(handler):
+        handlers.append((regex, handler))
+    return decorator
+</pre>
+
+
+<p>附带一个测试程序, test.py:</p>
+
+<pre>
+\#coding=utf8
+from hubot_script import *
+
+class TestScript(HubotScript):
+
+    @hear('def')
+    def test_handler(self, message):
+        return 'hear'
+
+    #@respond('abc')
+    #def test_handlera(self, message):
+    #    return 'respond'
+
+if __name__ == '__main__':
+    test = TestScript()
+</pre>
+
+
+<p><strong>
+至此</strong>
+**我已经将hubot, gtalk, python集成到一起了, 我的hubot的fork在<br/>
+https://github.com/liutaihua/hubot.git
+运行方式:<br/>
+clone之后, 首先进入hubot:<br/>
+<code>cd hubot &amp;&amp; npm install</code></p>
+
+<p>然后得在进入node_modules/hubot-gtalk/为hubot-gtalk这个adapter安装依赖:<br/>
+<code>cd node_modules/hubot-gtalk/ &amp;&amp; npm install</code></p>
+
+<p>最后运行<br/>
+<code>./bin/hubot -a gtalk </code></p>
+
+<p><strong>完.</strong></p>
+
+  </section>
+  
+  <div class="divider">
+    <span>
+    
+    <a href="/2013/04/26/nodejs-hubot-robot.html"><i class="fa fa-chevron-left"></i></a>
+    
+    </span>
+    <!-- BEGIN comment icon
+    <span><a href="javascript:leave_comment();" id="leave_comment_link"><i class="fa fa-comment-o"></i></a></span>
+    <span><a href="javascript:collapse_comment();" id="collapse_comment_link" style="display:none;"><i class="fa fa-chevron-up"></i></a></span>
+      END comment icon -->
+
+    <span>
+    
+    <a href="/2013/04/29/hubot-add-announce-method.html"><i class="fa fa-chevron-right"></i></a>
+    
+    </span>
+  </div>
+
+  <!-- BEGIN comment
+  <section class="comment">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'gopherwood';
+      var disqus_identifier = 'urn:uuid:4b74198f-ab1f-11e3-b17a-040ccecf359c';
+
+      function leave_comment() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          $("#leave_comment_link").css("display", "none");
+          $("#collapse_comment_link").css("display", "");
+      };
+      function collapse_comment() {
+          // document.getElementById("disqus_thread").innerHTML = '';
+          $("#disqus_thread").slideUp(400, function() {
+              $("#disqus_thread").empty();
+              $("#leave_comment_link").css("display", "");
+              $("#collapse_comment_link").css("display", "none");
+              $("#disqus_thread").css("display", "");
+          });
+      };
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </section>
+  END comment -->
+  
+</article>
+
+        </div>
+        <footer>
+          <div>
+            
+            &copy; 2013 ~ 2014 liutaihua | powered by jekyll | thanks <a href="http://lhzhang.com" title="sext vi">sext vi</a> | fork <a href="https://github.com/liutaihua/liutaihua.github.io" title="fork me">me</a>
+          </div>
+        </footer>
+      </div> <!-- main -->
+  </body>
+</html>

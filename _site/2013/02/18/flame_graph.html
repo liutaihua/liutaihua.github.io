@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="liutaihua" />
+    
+    <title>use FlameGraph for graph program</title>
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link href="/atom.xml" rel="alternate" title="yeah, the stuff" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/github.css">
+    <link rel="stylesheet" href="/media/css/fontawesome.css">
+    <script src="/media/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script> 
+    <script type="text/javascript" src="/media/js/highlight.pack.js"></script>
+    <script type="text/javascript">
+      hljs.initHighlightingOnLoad();
+    </script>
+  </head>
+  <body>
+      <div id="main" role="main">
+        <header>
+          <div id="header">
+            <h1><a title="yeah, the stuff" class="" href="/">yeah, the stuff</a></h1>
+          </div>
+          <nav>
+            
+            <span><a title="Archive" href="/archive.html"><i class="fa fa-list-ul"></i></a></span>
+            
+            <span><a title="Tags" href="/tags.html"><i class="fa fa-tags"></i></a></span>
+            
+            <span><a title="About" href="/about.html"><i class="fa fa-user"></i></a></span>
+            
+            <span><a title="Gallery" href="http://www.flickr.com/photos/liutaihua/"><i class="fa fa-film"></i></a></span>
+            
+            <span><a title="Blogroll" href="/links.html"><i class="fa fa-link"></i></a></span>
+            
+            <span><a title="Subscribe" href="/atom.xml"><i class="fa fa-rss"></i></a></span>
+            
+          </nav>
+        </header>
+        <div id="content">
+        <article>
+  <section class="title">
+    <h2>use FlameGraph for graph program </h2>
+  </section>
+  <section class="meta">
+  <span class="time">
+    <time datetime="2013-02-18">2013-02-18</time>
+  </span>
+  
+  <span class="tags">
+    
+    <a href="/tags.html#move from old blog" title="move from old blog">#move from old blog</a>
+    
+    <a href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/2013-02-18-use FlameGraph for graph program.markdown'>编辑</a>
+  </span>
+  <!-- BEGIN this would not work on any other domain -->
+  <span id="like-wrapper"></span>
+  <script type="text/javascript">
+    var like_shortname      = 'gopherwood';
+    var like_identifier     = 'urn:uuid:4b70bc63-ab1f-11e3-ad61-040ccecf359c';
+    var like_like_btn       = '&#xf087;';
+    var like_unlike_btn     = '&#xf087;';
+    var like_disable_unlike = true;
+
+    var l = document.createElement('script'); l.type = 'text/javascript'; l.async = true;
+    l.src = 'https://like-waynezhang.rhcloud.com/javascript/widget.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(l);
+  </script>
+  <!-- END this would not work on any other domain -->
+  
+  </section>
+  <section class="post">
+  <p>FlameGraph的例图,解释如下:</p>
+
+<p>图中每一个方块代表栈里的一个函数。
+Y轴代表调用深度，最上面的是当前正在CPU上执行的函数，下面的都是其祖先。每个函数都是由它下方的函数调用的。
+X轴不是按照时间先后排列的，它只代表样本数目。方块越宽，代表该函数出现的次数越多。
+在有多个并发线程同时被采样，样本总数可能超过采样所用的时间。</p>
+
+<p>配合perf使用的方法,分3步:</p>
+
+<blockquote><blockquote><p>perf record -a -g -F 1000 sleep 60</p>
+
+<p>perf script | ./stackcollapse-perf.pl > out.perf-folded</p>
+
+<p>cat out.perf-folded | ./flamegraph.pl > perf-kernel.svg</p></blockquote></blockquote>
+
+<p>perf record是使用perf工具采样, -a参数表示对整个系统采样,如果希望只采样指定进程, 那么可以使用-p 参数后跟PID
+-g表示记录函数调用桟, -F表示采样频率, 最后的sleep 60表示采样60秒后退出然后生成perf.data文件</p>
+
+<p>perf script 表示 Read perf.data (created by perf record) and display trace output
+这些从perf --help中都能看到帮助信息</p>
+
+<p>最后一步是使用flamergraph.pl生成svg图片</p>
+
+<p>perf工具非常方便, 上述只是为了产生图片形式的利于直观, 即使没有flamegraph, 只用perf也一样能方便看到统计数据:</p>
+
+<p>perf record之后,  使用perf report 即可查看执行record时生成的统计数据了,相对直接vim查看统计数据也时比较直观的.</p>
+
+<p>其中还有pert top  , perf stat等, pert top能实施的统计数据并以top的形式展现.</p>
+
+  </section>
+  
+  <div class="divider">
+    <span>
+    
+    <i class="fa fa-circle"></i>
+    
+    </span>
+    <!-- BEGIN comment icon
+    <span><a href="javascript:leave_comment();" id="leave_comment_link"><i class="fa fa-comment-o"></i></a></span>
+    <span><a href="javascript:collapse_comment();" id="collapse_comment_link" style="display:none;"><i class="fa fa-chevron-up"></i></a></span>
+      END comment icon -->
+
+    <span>
+    
+    <a href="/2013/02/18/postgresql-backup-restore.html"><i class="fa fa-chevron-right"></i></a>
+    
+    </span>
+  </div>
+
+  <!-- BEGIN comment
+  <section class="comment">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'gopherwood';
+      var disqus_identifier = 'urn:uuid:4b70bc63-ab1f-11e3-ad61-040ccecf359c';
+
+      function leave_comment() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          $("#leave_comment_link").css("display", "none");
+          $("#collapse_comment_link").css("display", "");
+      };
+      function collapse_comment() {
+          // document.getElementById("disqus_thread").innerHTML = '';
+          $("#disqus_thread").slideUp(400, function() {
+              $("#disqus_thread").empty();
+              $("#leave_comment_link").css("display", "");
+              $("#collapse_comment_link").css("display", "none");
+              $("#disqus_thread").css("display", "");
+          });
+      };
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </section>
+  END comment -->
+  
+</article>
+
+        </div>
+        <footer>
+          <div>
+            
+            &copy; 2013 ~ 2014 liutaihua | powered by jekyll | thanks <a href="http://lhzhang.com" title="sext vi">sext vi</a> | fork <a href="https://github.com/liutaihua/liutaihua.github.io" title="fork me">me</a>
+          </div>
+        </footer>
+      </div> <!-- main -->
+  </body>
+</html>

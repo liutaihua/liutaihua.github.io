@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="liutaihua" />
+    
+    <title>hubot增加announce方式做广播消息</title>
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link href="/atom.xml" rel="alternate" title="yeah, the stuff" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/github.css">
+    <link rel="stylesheet" href="/media/css/fontawesome.css">
+    <script src="/media/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script> 
+    <script type="text/javascript" src="/media/js/highlight.pack.js"></script>
+    <script type="text/javascript">
+      hljs.initHighlightingOnLoad();
+    </script>
+  </head>
+  <body>
+      <div id="main" role="main">
+        <header>
+          <div id="header">
+            <h1><a title="yeah, the stuff" class="" href="/">yeah, the stuff</a></h1>
+          </div>
+          <nav>
+            
+            <span><a title="Archive" href="/archive.html"><i class="fa fa-list-ul"></i></a></span>
+            
+            <span><a title="Tags" href="/tags.html"><i class="fa fa-tags"></i></a></span>
+            
+            <span><a title="About" href="/about.html"><i class="fa fa-user"></i></a></span>
+            
+            <span><a title="Gallery" href="http://www.flickr.com/photos/liutaihua/"><i class="fa fa-film"></i></a></span>
+            
+            <span><a title="Blogroll" href="/links.html"><i class="fa fa-link"></i></a></span>
+            
+            <span><a title="Subscribe" href="/atom.xml"><i class="fa fa-rss"></i></a></span>
+            
+          </nav>
+        </header>
+        <div id="content">
+        <article>
+  <section class="title">
+    <h2>hubot增加announce方式做广播消息 </h2>
+  </section>
+  <section class="meta">
+  <span class="time">
+    <time datetime="2013-04-29">2013-04-29</time>
+  </span>
+  
+  <span class="tags">
+    
+    <a href="/tags.html#move from old blog" title="move from old blog">#move from old blog</a>
+    
+    <a href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/2013-04-29-hubot增加announce方式做广播消息.markdown'>编辑</a>
+  </span>
+  <!-- BEGIN this would not work on any other domain -->
+  <span id="like-wrapper"></span>
+  <script type="text/javascript">
+    var like_shortname      = 'gopherwood';
+    var like_identifier     = 'urn:uuid:4b742e4f-ab1f-11e3-aa67-040ccecf359c';
+    var like_like_btn       = '&#xf087;';
+    var like_unlike_btn     = '&#xf087;';
+    var like_disable_unlike = true;
+
+    var l = document.createElement('script'); l.type = 'text/javascript'; l.async = true;
+    l.src = 'https://like-waynezhang.rhcloud.com/javascript/widget.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(l);
+  </script>
+  <!-- END this would not work on any other domain -->
+  
+  </section>
+  <section class="post">
+  <p>hubot的announce通知所有在线联系人</p>
+
+<p>hubot在使用挂接到其他平台时, 是支持room的方式了, 这样就支持了由一个用户发送announce通知所有在线联系人的方式了.</p>
+
+<p>因为想到以后或许可以使用hubot来作为监控通知, 当你指定的监控项目告警时, 使用hubot把信息发送到所有在线订阅人.</p>
+
+<p>因为对nodejs的这个coffee基本都还在研究阶段, 所以以下说的不能代表完全没错误, 或是最佳的办法..</p>
+
+<p>robot对象有个robot.brain.data.users方法, 保存的是当前的在线订阅用户, 利用这个, 可以随意的将某条消息发送给所有人, 这里举例是announce.py脚本:</p>
+
+<pre>
+
+module.exports = (robot) ->
+
+
+
+  if process.env.HUBOT_ANNOUNCE_ROOMS
+
+    allRooms = process.env.HUBOT_ANNOUNCE_ROOMS.split(',')
+
+  else
+
+    allRooms = []
+
+
+
+  robot.respond /announce (.*)/i, (msg) ->
+
+    announcement = msg.match[1]
+
+    for own key, user of robot.brain.data.users
+
+      user_info = { user: user } # 总之, 为了后面robot和adapter的send方法调用, 多包一层, 否则send取user会取成undefined
+
+      robot.send user_info, announcement 
+
+</pre>
+
+
+<p>上面使用的robot.send方法发送消息,这个方法定义在src/robot.coffee里:</p>
+
+<pre>
+
+  send: (user, strings...) -> 
+
+    @adapter.send user, strings…  
+
+</pre>
+
+
+<p></p>
+
+<p>可以看出它实际是调用你启动hubot时所用的具体的adapter的send方法, 这里我用的gtalk这个adapter, 因此可以找到这个send方法最终定义在:  node_modules/hubot-gtalk/src/gtalk.coffee</p>
+
+<pre>
+
+  send: (envelope, strings...) ->
+
+    for str in strings
+
+      message = new Xmpp.Element('message',
+
+          from: @client.jid.toString()
+
+          to: envelope.user.id
+
+          type: if envelope.room then 'groupchat' else envelope.user.type
+
+        ).
+
+        c('body').t(str)
+
+      # Send it off
+
+      @client.send message
+
+</pre>
+
+
+<p></p>
+
+<p>上面代码中, 使用的是envelope.user.id来获取用户id的, 因此才需要在announce.coffee脚本里, 比较傻帽的在user外在包一层{ user: user }, 否则在这里使用envelope.user.id将无法取到用户id(就是gmail邮箱地址), 导致广播消息失败.</p>
+
+<p>于这个send方法对应的, 还有rely和messageRoom方法, 他们在robot.coffee里定义时最终都是调用adapter.send来发送消息.</p>
+
+<p>至于以后用什么client方式发送广播告警, 简单的方法是:</p>
+
+<p>1, 写一个简单的xmpp协议(gtalk协议)的小sdk脚本, 通过它发送announce消息到hubot, 然后hubot广播给所有人.<br/>
+2, robot对象有一个针对http的方法, robot.router.post可以获取通过hubot的http接口post上来的数据, 这样如果要发布announce, 只需要post到这个方法上即可, 代码如下:</p>
+
+<pre>
+  robot.router.post "/broadcast/create", (req, res) ->
+    for own key, user of robot.brain.data.users
+      user_info = { user: user } 
+      robot.send user_info, req.body.message
+    res.end "Message Sent"
+</pre>
+
+
+<p>
+用<code>curl -X POST -d "message=opopop" http://hubot-server-ip:9898/broadcast/create</code> 测试看看吧.</p>
+
+<p>完.</p>
+
+  </section>
+  
+  <div class="divider">
+    <span>
+    
+    <a href="/2013/04/27/hubot-nodejs-to-python-script.html"><i class="fa fa-chevron-left"></i></a>
+    
+    </span>
+    <!-- BEGIN comment icon
+    <span><a href="javascript:leave_comment();" id="leave_comment_link"><i class="fa fa-comment-o"></i></a></span>
+    <span><a href="javascript:collapse_comment();" id="collapse_comment_link" style="display:none;"><i class="fa fa-chevron-up"></i></a></span>
+      END comment icon -->
+
+    <span>
+    
+    <a href="/2013/05/01/about-blog-and-hubot-nodejs.html"><i class="fa fa-chevron-right"></i></a>
+    
+    </span>
+  </div>
+
+  <!-- BEGIN comment
+  <section class="comment">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'gopherwood';
+      var disqus_identifier = 'urn:uuid:4b742e4f-ab1f-11e3-aa67-040ccecf359c';
+
+      function leave_comment() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          $("#leave_comment_link").css("display", "none");
+          $("#collapse_comment_link").css("display", "");
+      };
+      function collapse_comment() {
+          // document.getElementById("disqus_thread").innerHTML = '';
+          $("#disqus_thread").slideUp(400, function() {
+              $("#disqus_thread").empty();
+              $("#leave_comment_link").css("display", "");
+              $("#collapse_comment_link").css("display", "none");
+              $("#disqus_thread").css("display", "");
+          });
+      };
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </section>
+  END comment -->
+  
+</article>
+
+        </div>
+        <footer>
+          <div>
+            
+            &copy; 2013 ~ 2014 liutaihua | powered by jekyll | thanks <a href="http://lhzhang.com" title="sext vi">sext vi</a> | fork <a href="https://github.com/liutaihua/liutaihua.github.io" title="fork me">me</a>
+          </div>
+        </footer>
+      </div> <!-- main -->
+  </body>
+</html>

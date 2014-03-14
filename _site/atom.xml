@@ -1,0 +1,993 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+ 
+ <title>yeah, the stuff</title>
+ <link href="http://liutaihua.github.io/atom.xml" rel="self"/>
+ <link href="http://liutaihua.github.io"/>
+ <updated>2014-03-14T14:25:18+08:00</updated>
+ <id>http://liutaihua.github.io</id>
+ <author>
+   <name>liutaihua</name>
+ </author>
+
+ 
+ <entry>
+   <title>tcp-kernel-net.core.somaxconn-backlog</title>
+   <link href="http://liutaihua.github.io/2014/03/14/tcp-kernel-net.core.somaxconn-backlog.html"/>
+   <updated>2014-03-14T00:00:00+08:00</updated>
+   <id>urn:uuid:cd45f762-d157-4a2c-854e-eaa6d4070247</id>
+   <content type="html">&lt;p&gt;一个新服上线, 玩家人数因推广, 较以前的服在线人数大增,  而且由于物理机器上已经存在以前的几个服, 这次新服上了之后在线人数到一定量就会产生掉线的情况, 很奇怪,  怀疑过sysctl.conf 的range_port设的不够用, 或time_waite过大,  但实际这2个值都应该在正常范围内,  但是还是优化了一下回收time_waite的速度, 以及加大range_port,  最后还是不奏效.&lt;/p&gt;
+
+&lt;p&gt;由于我们每个服上,  有2个服务进程之间会使用127.0.0.1产生短连接, 所以有比较大的tcp断开后的未关闭部分, 但是原因并不在此.&lt;/p&gt;
+
+&lt;p&gt;最后查到了net.core.somaxconn  somaxconn这个是os限制单个listen端口的tcp队列长度,  优化之前其实已经改成了1024(系统默认是128),  但是由于新服并发量比较大, 突破这个数字是有可能的,  果断加大了net.core.somaxconn数量到32768, 肯定足够大了, 继续观察.&lt;/p&gt;
+
+&lt;p&gt;同时看了下关于tcp的backlog选项, 这个是除了os层的somaxconn外, 应用层在一个socket  listen的时候设定的.
+对于一个listening socket，kernel维护者两个队列：
+1.一个未完成连接的队列，此队列维护着那些已收到了客户端SYN分节信息，等待完成三路握手的连接，socket的状态是SYN_RCVD&lt;/p&gt;
+
+&lt;p&gt;2.一个已完成的连接的队列，此队列包含了那些已经完成三路握手的连接，socket的状态是ESTABLISHED&lt;/p&gt;
+
+&lt;p&gt;backlog参数历史上被定义为上面两个队列的大小之和&lt;/p&gt;
+
+&lt;p&gt;Berkely实现中的backlog值为上面两队列之和再乘以1.5&lt;/p&gt;
+
+&lt;p&gt;当客户端的第一个SYN到达的时候，TCP会在未完成队列中增加一个新的记录然后回复给客户端三路握手中的第二个分节(服务端的SYN和针对客户端的ACK)，这条记录会在未完成队列中一直存在，直到三路握手中的最后一个分节到达，或者直到超时(Berkeley时间将这个超时定义为75秒)&lt;/p&gt;
+
+&lt;p&gt;如果当客户端SYN到达的时候队列已满，TCP将会忽略后续到达的SYN，但是不会给客户端发送RST信息，因为此时允许客户端重传SYN分节，如果返回错误信息，那么客户端将无法分清到底是服务端对应端口上没有相应应用程序还是服务端对应端口上队列已满这两种情况&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>move-blog-to-github.io</title>
+   <link href="http://liutaihua.github.io/2014/03/14/move-blog-to-github.io.html"/>
+   <updated>2014-03-14T00:00:00+08:00</updated>
+   <id>urn:uuid:4cebbcac-2c6b-461d-a9c3-eec0ed69801a</id>
+   <content type="html">&lt;p&gt;&lt;img src=&quot;http://farm8.staticflickr.com/7335/13103201464_0ba806f190_d.jpg&quot;&gt;&lt;/img&gt;&lt;/p&gt;
+
+&lt;p&gt;折腾域名, vps, 一圈折腾下来, 以前用PY搞的一个blog, 方式也是使用markdown语法写blog,
+然后用markdown模块处理语法, 生成html做静态展示. 折腾完之后, 又找了一个开源的在线浏览器markdown编辑器,
+完成一个简单的在浏览器里编辑器, 集成在blog里, 一段时间不关注, 发现以前域名未付费已过期了.
+也罢, 以前blog的github在: https://github.com/liutaihua/yyu.me.git&lt;/p&gt;
+
+&lt;p&gt;这个blog的theme是github一位coder开源的, 于是把以前的blog, 迁移过来, 还是一样的使用markdown语法, 几乎改变不大,
+而且github免费使用. 省去折腾了.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>about-tcp-time_wait-status</title>
+   <link href="http://liutaihua.github.io/2014/03/14/about-tcp-time_wait-status.html"/>
+   <updated>2014-03-14T00:00:00+08:00</updated>
+   <id>urn:uuid:2692d5e2-ba87-4d0a-9522-53c5e6579e54</id>
+   <content type="html">&lt;p&gt;因为服务器time_wait半连接比较多, 一直怕半连接状态时,  由于系统2个服务之间会很多短连接, 由这些短连接产生的半连接, 在netstat里能看到很多系统被动连接端口,  一直以为这种半连接状态下的系统被端口, 会在这个时刻对一个应用的socket listen这个端口时, 产生冲突.
+实际表面是不会的.
+例:
+tcp        0      0 127.0.0.1:11544         127.0.0.1:38235         TIME_WAIT&lt;/p&gt;
+
+&lt;p&gt;这个里面的38235端口是系统为了连接自己127.0.0.1:11544端口时, 而被动的一个随机端口, 这个短连接在断开后处于time_wait状态,  而这个状态下的38235端口不会影响应用层发起一个38235端口的Listening&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>some-note-of-cpp-gameserver</title>
+   <link href="http://liutaihua.github.io/2014/03/13/some-note-of-cpp-gameserver.html"/>
+   <updated>2014-03-13T00:00:00+08:00</updated>
+   <id>urn:uuid:0a6e4503-47d4-4d55-9a44-ecb462036f01</id>
+   <content type="html">&lt;p&gt;&lt;img src=&quot;http://farm4.staticflickr.com/3779/13106561643_5590c06280_c_d.jpg&quot;&gt;I just want a drink&lt;/img&gt;&lt;/p&gt;
+
+&lt;p&gt;c++通过swig暴露自己的API提供给python调用,  在我们的例子中生成的swig文件是&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;data/cnscript/gamelogic.py
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;比如player的SetAttr, GetAttr等接口, 在这里均暴露出, 已提供给python脚本使用.&lt;/p&gt;
+
+&lt;p&gt;同时在c++里还有使用Python.h开发, 使用PyObject来调用python的方法, 比如游戏rule里的on_player_entered_map等方法, 在c++里某些逻辑触发时, 会调用这些py方法.&lt;/p&gt;
+
+&lt;p&gt;c++里构建一个观察器Observers, 估计是负责监视事件的发生. 当事件发生时(这个不确定, Observers还是EventDispatcher类负责事件), 比如:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;PyObserver::OnObjectAddedToWorldPostNotify  则会调用某些触发函数,  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;但是函数逻辑是写在python脚本里的, 所以在这里触发时, 通过PyObject Call. 当然实际源码里这中间经过一个ScriptManager的类进行的, 但最后都是在使用:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;code&amp;gt;
+PyObject *pFunc = _GetPythonFunc(name);
+return _CallPythonObj(pFunc, pTupleArgs);
+&amp;lt;/code&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;至此c++和py之间的互调逻辑完成.&lt;/p&gt;
+
+&lt;p&gt;游戏场景的World:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Configuration/EnvHolder.cpp   源码里有一个BuildWorldNew的类, 在某个场景进程启动时, 初始化GameWorld时, 会初始化调用  BuildWorldNew,而BuildWorldNew里通过  
+ScriptManager::Instance() -&amp;gt; CallNoRT调用data/cnscript/rule/utils.py里的dress_world_up,  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;dress_world_up里会根据启动进程的参数, 为场景加入指定的Ruler类, 比如SingleJJC类.&lt;/p&gt;
+
+&lt;p&gt;进程在启动时, GameWorld进行一系列初始化, 包括注册新的事件调度器EventDispatcher,SkillManager,HttpProxy, CreatureObserver， 以及加载WorldObject对象.
+GameWorld构建完成之后, 等待用户进入, GameWorld有一系列诸如OnPlayerLogin, login之后进行GameWorld::AddPlayerOrSendLoginFailedAck， 创建玩家数据, 加载玩家各类数据比如宠物, 坐骑, 技能等等.&lt;/p&gt;
+
+&lt;p&gt;WorldObject类都是关于场景里物品对象, 碰撞检测, 初始化物品管理器GameItemManager，&lt;/p&gt;
+
+&lt;p&gt;Creature生物类, 是包括Player类, Monster类的父类.&lt;/p&gt;
+
+&lt;p&gt;EventDispatcher事件调度器&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;包含一个EventReceiver事件接收者, Create方法接收一个callback作为回调创建一个事件
+Register方法接收一个receiver作为参数, 把事件接受者加入接受者列表, 
+EventDispatcher也有一个Update方法, 会遍历所有事件, 如果delay时间对了, 则根据receiver回调给于的callback.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;GameHolder是游戏外层主循环类, 一个while True进入循环, 每秒20个frame的方式, 对GameHoler自身, GameWorld, WorldObject对象, 进行Update调用, 以更新数据, 触发事件等.&lt;/p&gt;
+
+&lt;pre&gt;
+&lt;code&gt;
+Configuration/ObjectWebFactory.cpp文件里， ObjectWebFactory类主要进行的是具体是加载玩家数据的逻辑:
+    void LoadCharmOf(Player*, const ptree &amp;) const;                             // 获取符文
+    void LoadEquipmentsOf(Player*, const ptree &amp;) const;                        // 获取角色装备
+    void LoadBagOf(Player*, const ptree &amp;) const;                               // 获取角色背包
+    void LoadSkillsOf(Player*, const ptree &amp;) const;                            // 获取角色技能
+    void LoadPassiveSkillsOf(Player*, const ptree &amp;) const;
+&lt;/code&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;在 void PlayerCreation方法完成后,  方法: PlayerSavingThread会为此场景里的每个玩家创建一个线程,这个线程会用来作为接下来游戏过程中的数据回存或新数据重载.
+ObjectWebFactory类里的LoadSkillsOf等方法, 实际是调用Player里的Loadxxx方法:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;code&amp;gt;
+void ObjectWebFactory::LoadTechOf(Player* pPlayer, const ptree&amp;amp; ptTech) const
+{
+    CnAssert(g_IAmMainThread);
+    CnAssert(pPlayer);
+    pPlayer-&amp;gt;LoadTech(ptTech); ＃这里
+}
+&amp;lt;/code&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;在Player.cpp里存在方法LoadSkills, 这个方法会根据现有场景World里的 WorldObjectFactory类，通过tcp或者http从hades系统那边获取具体的json格式数据:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;code&amp;gt;
+bool Player::LoadTech()
+{
+    ptree ptTech;
+    bool ok = World()-&amp;gt;GetObjectFactory().GetJson(&quot;technology/get_tech_attr?userid=&quot; + Crown::ToString(GetUserId()), ptTech);  ＃这里是从hades获取数据
+    if (!ok) return false;
+    LoadTech(ptTech); #这里是LoadTech的另外一个充载方法， 它会对获取到的数据进行整合,把数值加到Player上.
+    return true;
+}
+&amp;lt;/code&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;GetJson这个方法, 应该是继承或来自于Configuration/ObjectWebFactory.cpp里,  在这里有对GetJson方法进行http改tcp的代码, 而http方式正式游戏以前用的, 后来改成了socket去连接hades了.&lt;/p&gt;
+
+&lt;p&gt;暂时到这里.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>五一随聊</title>
+   <link href="http://liutaihua.github.io/2013/05/01/about-blog-and-hubot-nodejs.html"/>
+   <updated>2013-05-01T00:00:00+08:00</updated>
+   <id>urn:uuid:4b7444a6-ab1f-11e3-a134-040ccecf359c</id>
+   <content type="html">&lt;p&gt;&lt;img src=&#39;http://ww1.sinaimg.cn/large/793bee10jw1e47srugr8aj20e509sjsi.jpg&#39;&gt;&lt;/p&gt;
+
+&lt;p&gt;五一非常无聊的在家呆着, 最近在google资料时, 查到的一些技术blog, 发现好多都在github里, 也就是好多人都把github当作保存技术文章的的管理器, 然后用比如Markdown等语法形式写, 自己弄个简单的程序读出来, 展示就可以变成一个基本的blog站点了.&lt;br/&gt;
+我的这个blog也是这个意思, https://github.com/liutaihua/yyu.me.git, 写好的article放在post目录, 一个tornado的web框架, 读出这些article, 加个html围绕就变成现在这个样子了, 不过我还给它增加了在线编辑器, 是一个Markdown语法的在线编辑器, 可以试试预览Markdown语法. &lt;br/&gt;
+鉴于我每次发文章虽然是通过在线编辑器发的, 但是实际我写字却是用另外一个Markdown编辑器, 这个在线editor只是copy进去, 然后设定标题.&lt;br/&gt;
+想到一个更简洁点的方法, 有时间就把它实现一下, 就是在blog服务上做个api, 接受post, 然后平常在shell里用vim就可以写blog了, 把写好的article保存, 然后POST到这个api即可, 这样也省得再次打开web编辑器了.&lt;/p&gt;
+
+&lt;p&gt;图里机器人是github最近开源的hubot, 挺不错. github已经用它来做运维了, 代码发布等. 我想未来这不失为一个运维的好方向, 传统的服务monitor, 告警, 在小型公司基本就是用一个nagios诸如此类的开源套件做告警, 基本就都是在使用邮件发送告警邮件了. 不过邮件实时性稍差, 如果用robot, 不失为一个好方法.&lt;br/&gt;
+虽然nodejs语法跟js有所不同, 不过看起来还挺不错的, 可能因为最近刚看完一本&amp;lt;javascript高级程序设计&gt;, js语法基本了解了一下. hubot在用nodejs写的时候, 很多函数调用, 参数都有一个callback, 真是各种callback传来传去, 和以前接触的确实有所区别, 有点意思.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>hubot增加announce方式做广播消息</title>
+   <link href="http://liutaihua.github.io/2013/04/29/hubot-add-announce-method.html"/>
+   <updated>2013-04-29T00:00:00+08:00</updated>
+   <id>urn:uuid:4b742e4f-ab1f-11e3-aa67-040ccecf359c</id>
+   <content type="html">&lt;p&gt;hubot的announce通知所有在线联系人&lt;/p&gt;
+
+&lt;p&gt;hubot在使用挂接到其他平台时, 是支持room的方式了, 这样就支持了由一个用户发送announce通知所有在线联系人的方式了.&lt;/p&gt;
+
+&lt;p&gt;因为想到以后或许可以使用hubot来作为监控通知, 当你指定的监控项目告警时, 使用hubot把信息发送到所有在线订阅人.&lt;/p&gt;
+
+&lt;p&gt;因为对nodejs的这个coffee基本都还在研究阶段, 所以以下说的不能代表完全没错误, 或是最佳的办法..&lt;/p&gt;
+
+&lt;p&gt;robot对象有个robot.brain.data.users方法, 保存的是当前的在线订阅用户, 利用这个, 可以随意的将某条消息发送给所有人, 这里举例是announce.py脚本:&lt;/p&gt;
+
+&lt;pre&gt;
+
+module.exports = (robot) -&gt;
+
+
+
+  if process.env.HUBOT_ANNOUNCE_ROOMS
+
+    allRooms = process.env.HUBOT_ANNOUNCE_ROOMS.split(&#39;,&#39;)
+
+  else
+
+    allRooms = []
+
+
+
+  robot.respond /announce (.*)/i, (msg) -&gt;
+
+    announcement = msg.match[1]
+
+    for own key, user of robot.brain.data.users
+
+      user_info = { user: user } # 总之, 为了后面robot和adapter的send方法调用, 多包一层, 否则send取user会取成undefined
+
+      robot.send user_info, announcement 
+
+&lt;/pre&gt;
+
+
+&lt;p&gt;上面使用的robot.send方法发送消息,这个方法定义在src/robot.coffee里:&lt;/p&gt;
+
+&lt;pre&gt;
+
+  send: (user, strings...) -&gt; 
+
+    @adapter.send user, strings…  
+
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;p&gt;可以看出它实际是调用你启动hubot时所用的具体的adapter的send方法, 这里我用的gtalk这个adapter, 因此可以找到这个send方法最终定义在:  node_modules/hubot-gtalk/src/gtalk.coffee&lt;/p&gt;
+
+&lt;pre&gt;
+
+  send: (envelope, strings...) -&gt;
+
+    for str in strings
+
+      message = new Xmpp.Element(&#39;message&#39;,
+
+          from: @client.jid.toString()
+
+          to: envelope.user.id
+
+          type: if envelope.room then &#39;groupchat&#39; else envelope.user.type
+
+        ).
+
+        c(&#39;body&#39;).t(str)
+
+      # Send it off
+
+      @client.send message
+
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;p&gt;上面代码中, 使用的是envelope.user.id来获取用户id的, 因此才需要在announce.coffee脚本里, 比较傻帽的在user外在包一层{ user: user }, 否则在这里使用envelope.user.id将无法取到用户id(就是gmail邮箱地址), 导致广播消息失败.&lt;/p&gt;
+
+&lt;p&gt;于这个send方法对应的, 还有rely和messageRoom方法, 他们在robot.coffee里定义时最终都是调用adapter.send来发送消息.&lt;/p&gt;
+
+&lt;p&gt;至于以后用什么client方式发送广播告警, 简单的方法是:&lt;/p&gt;
+
+&lt;p&gt;1, 写一个简单的xmpp协议(gtalk协议)的小sdk脚本, 通过它发送announce消息到hubot, 然后hubot广播给所有人.&lt;br/&gt;
+2, robot对象有一个针对http的方法, robot.router.post可以获取通过hubot的http接口post上来的数据, 这样如果要发布announce, 只需要post到这个方法上即可, 代码如下:&lt;/p&gt;
+
+&lt;pre&gt;
+  robot.router.post &quot;/broadcast/create&quot;, (req, res) -&gt;
+    for own key, user of robot.brain.data.users
+      user_info = { user: user } 
+      robot.send user_info, req.body.message
+    res.end &quot;Message Sent&quot;
+&lt;/pre&gt;
+
+
+&lt;p&gt;
+用&lt;code&gt;curl -X POST -d &quot;message=opopop&quot; http://hubot-server-ip:9898/broadcast/create&lt;/code&gt; 测试看看吧.&lt;/p&gt;
+
+&lt;p&gt;完.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>为hubot机器人脚本增加python扩展</title>
+   <link href="http://liutaihua.github.io/2013/04/27/hubot-nodejs-to-python-script.html"/>
+   <updated>2013-04-27T00:00:00+08:00</updated>
+   <id>urn:uuid:4b74198f-ab1f-11e3-b17a-040ccecf359c</id>
+   <content type="html">&lt;p&gt;为hubot机器人脚本增加python扩展&lt;/p&gt;
+
+&lt;p&gt;昨天顺利把hubot跑起来了, 能回答了. 也通过nodejs的exec命令执行shell的方式, 将消息以参数的形式传给process.py处理, 以形成用py写脚本的形式.&lt;br/&gt;
+不过上面方式有缺陷:&lt;br/&gt;
+1, nodejs不是真正的调用py, 同时py执行的返回或直接print或写stdout(print在某种程度上就是stdout), 然后nodejs什么都不用干, 就直接相当于把stdout使用msg.send回复给gtalk了.&lt;br/&gt;
+2, 整体结构不优美, nojs跟py还得靠exec执行shell的形式, 这种调用方式挺丑陋.&lt;/p&gt;
+
+&lt;p&gt;在github上找到一个脚本, 也是为了用python来写hubot的脚本, 实现方式也是用stdout和stdin结合, 达到nodejs收到gtalk消息后, 将消息传给py处理. 拿来后, 又做了一些修改, 具体过程是:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;* 封装一个Python 类, 接收stdin, 输出stdout.&lt;br/&gt;
+* 在nodejs里启动这个py类的listen监听stdin, robot收到消息时write到stdin, &lt;br/&gt;
+* py从stdin中读到消息, 交给指定的handler&lt;br/&gt;
+* handler处理完成后, 输出stdout, 同时触发nodejs的event, 读取stdout通过robot发送回馈信息.  &lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;pyscript.coffee脚本如下:&lt;/p&gt;
+
+&lt;pre&gt;
+class PythonScript
+
+    pyScriptPath = __dirname + &#39;/test.py&#39;
+    python_script = require(&#39;child_process&#39;).spawn(&#39;python&#39;, [pyScriptPath])
+    python_script.stdout.on &#39;data&#39;, (data) =&gt;
+        receive_from_python(data.toString())
+
+    module.exports = (robot) -&gt;
+        @robot = robot
+        #robot.respond /(.*)/i, (msg) -&gt;
+        #    newRegex = new RegExp(&quot;^[@]?#{robot.name}[:,]? ?(.*)&quot;, &#39;i&#39;)
+        #    match = newRegex.exec msg.message.text
+        #    send_to_python(match[1], msg.message.room, &#39;respond&#39;)
+        #    @robot.msg = msg
+
+        robot.hear /(.*)/i, (msg) -&gt;
+            send_to_python(msg.message.text, msg.message.room, &#39;hear&#39;)
+            @robot.msg = msg
+
+    send_to_python = (message, room, method) -&gt;
+        dict =
+            type : method,
+            message : message,
+            room : room
+        python_script.stdin.write(JSON.stringify(dict) + &#39;\n&#39;)
+        console.log JSON.stringify(dict)
+
+    receive_from_python = (json) -&gt;
+        data = JSON.parse(json)
+        #@robot.messageRoom data.room, data.message # 恶心的问题, data.room在send_to_python调用传的参数msg.message.room是undefined, 导致这里不能这样用
+        @robot.msg.send data.message   # 于是在入口的地方直接把msg对象赋给@robot里的, 在这里就能夸函数调用msg.send了.
+
+&lt;/pre&gt;
+
+
+&lt;p&gt;PythonScript类封装如下: hubot_script.py&lt;/p&gt;
+
+&lt;pre&gt;
+handlers = [
+    (r&#39;/hubot/sys/(.*)&#39;, syscmdhandler),
+    (r&#39;/hubot/chat/(.*)&#39;, chathandler),
+]
+
+class HubotScript:
+    def __init__(self):
+        self.start_listening()
+
+    # 创建一个listen, 监听标准输入, 有输入时执行后面逻辑
+    def start_listening(self):
+        while True:
+            line = sys.stdin.readline()
+            self.receive(line)
+
+    def receive(self, json_str):
+        # 这里一定需要捕获错误, 否则出错会直接跳出 start_listening中的循环, 监听就结束了
+        try:
+            json_dict = json.loads(json_str)
+            json_dict[&#39;message&#39;] = &#39;/&#39; + &#39;/&#39;.join(json_dict[&#39;message&#39;].split(&#39; &#39;)) # 搞成类似url的形式, 方便handlers里的regex匹配
+            self.dispatch(json_dict)
+        except Exception, e:
+            print e
+
+    def send(self, message):
+        if message:
+            #print json.dumps(message)
+            sys.stdout.write(json.dumps(message) + &#39;\n&#39;)
+            sys.stdout.flush()
+
+    # Message Dispatch
+    def dispatch(self, json_dict):
+        #msg_type = json_dict[&#39;type&#39;]
+        #if msg_type == &#39;hear&#39;:
+        #    self.dispatch_generic(json_dict, _hear_handlers)
+        #elif msg_type == &#39;respond&#39;:
+        #    self.dispatch_generic(json_dict, _resp_handlers)
+        self.dispatch_generic(json_dict, handlers)
+        
+    def dispatch_generic(self, message, regexes):
+        for regex, handler in regexes:
+            p = re.match(regex, message[&#39;message&#39;])
+            if p:
+                action = &#39; &#39;.join(p.groups()[0].split(&#39;/&#39;))
+                response = message
+                #response_text = handler(self, message)
+                response_text = handler(self, action)
+                if response_text:
+                    if len(response_text) &gt; 3000: # nodejs的JSON.parse不能处理太长的str
+                        response_text = response_text[:3000]
+                    response[&#39;message&#39;] = response_text
+                    self.send(response)
+def hear(regex): # 测试用decorator
+    def decorator(handler):
+        handlers.append((regex, handler))
+    return decorator
+&lt;/pre&gt;
+
+
+&lt;p&gt;附带一个测试程序, test.py:&lt;/p&gt;
+
+&lt;pre&gt;
+\#coding=utf8
+from hubot_script import *
+
+class TestScript(HubotScript):
+
+    @hear(&#39;def&#39;)
+    def test_handler(self, message):
+        return &#39;hear&#39;
+
+    #@respond(&#39;abc&#39;)
+    #def test_handlera(self, message):
+    #    return &#39;respond&#39;
+
+if __name__ == &#39;__main__&#39;:
+    test = TestScript()
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;strong&gt;
+至此&lt;/strong&gt;
+**我已经将hubot, gtalk, python集成到一起了, 我的hubot的fork在&lt;br/&gt;
+https://github.com/liutaihua/hubot.git
+运行方式:&lt;br/&gt;
+clone之后, 首先进入hubot:&lt;br/&gt;
+&lt;code&gt;cd hubot &amp;amp;&amp;amp; npm install&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;然后得在进入node_modules/hubot-gtalk/为hubot-gtalk这个adapter安装依赖:&lt;br/&gt;
+&lt;code&gt;cd node_modules/hubot-gtalk/ &amp;amp;&amp;amp; npm install&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;最后运行&lt;br/&gt;
+&lt;code&gt;./bin/hubot -a gtalk &lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;完.&lt;/strong&gt;&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>nodejs的机器人hubot集成到gtalk</title>
+   <link href="http://liutaihua.github.io/2013/04/26/nodejs-hubot-robot.html"/>
+   <updated>2013-04-26T00:00:00+08:00</updated>
+   <id>urn:uuid:4b740694-ab1f-11e3-baaa-040ccecf359c</id>
+   <content type="html">&lt;p&gt;hubot 机器人, 居然今天才去了解了下它, 用nodejs运行, coffee javascrpit写的.&lt;/p&gt;
+
+&lt;p&gt;记录下安装方式&lt;br/&gt;
+如果是redhat系列的linux, 使用yum 安装即可, centos6后的nodejs版本已经很新了.
+实在不行就搞源码安装.&lt;/p&gt;
+
+&lt;p&gt;1, clone代码&lt;br/&gt;
+    git clone https://github.com/github/hubot&lt;/p&gt;
+
+&lt;p&gt;2, 安装依赖
+    cd hubot &amp;amp;&amp;amp; npm install&lt;/p&gt;
+
+&lt;p&gt;3, 尝试运行&lt;br/&gt;
+    ./bin/hubot
+在出现的hubot的console 输入hubot help看看帮助命令吧, 输入pug me命令, 如果正常会返回一个http链接, 打开页面是个可爱的狗狗.&lt;/p&gt;
+
+&lt;p&gt;4,  将hubot和gtalk连接&lt;br/&gt;
+用./bin/hubot -h可以看到帮助, 其中-a参数表示指定adapter&lt;br/&gt;
+git clone git://github.com/atmos/hubot-gtalk.git 获取gtalk的adapter代码, 直接将hubot-gtalk放在hubot的node_modules下, 方便hubot查找库.&lt;/p&gt;
+
+&lt;p&gt;关于连接gtalk的文档, 可以查看  https://github.com/github/hubot/wiki/Adapter:-Gtalk&lt;br/&gt;
+其实很简单, 设定2个系统环境变量: HUBOT_GTALK_USERNAME, HUBOT_GTALK_PASSWORD
+我的做法非常暴力, 我直接编辑 node_modules/hubot-gtalk/src/gtalk.coffee  修改&lt;br/&gt;
+    # Client Options
+    @options =
+      username: &#39;xxxxx@gmail.com&#39;
+      password: &#39;xxxxxxxxx&#39;&lt;/p&gt;
+
+&lt;p&gt;还有一个系统变量需要注意, hubot运行时,比如直接./bin/hubot -a shell默认会监听端口, 而端口值使用的是环境变量PORT, 默认是8080 ,如果被占用, hubot程序启动不了. 所以设定下 export PORT=8989之类的端口.&lt;/p&gt;
+
+&lt;p&gt;前面说道的gtalk这个adapter, 源文件其实就是  node_modules/hubot-gtalk/src/gtalk.coffee, 我在使用过程中发现, 里面有个TextMessage函数在用前没有导入, 会导致运行后, 虽然hubot能连接gtalk, 但是无法响应你的消息,  稍作修改(node_modules/hubot-gtalk/src/gtalk.coffee):&lt;/p&gt;
+
+&lt;p&gt;Adapter       = require &#39;/root/app/hubot/src/adapter&#39;
+{TextMessage} = require &#39;/root/app/hubot/src/message&#39;&lt;/p&gt;
+
+&lt;p&gt;同时依葫画瓢, 写了一个isAllowUser方法, 用于验证用户, 不能谁都邀请你这个hubot聊天, 然后就向hubot发命令吧, 因为我的hubot里写了一些系统相关的, 怕不安全.
+user_list =
+  &#39;defage&#39;: &#39;admin&#39;
+  &#39;liutaihua2008&#39;: &#39;user&#39;&lt;/p&gt;
+
+&lt;p&gt;  isAllowUser: (jid) -&gt;
+    name = jid.user
+    if user_list[name] == undefined
+      return false
+    return true&lt;/p&gt;
+
+&lt;p&gt;在handlePresence 函数里调用一下, 验证不通过就不进行后面的动作了&lt;br/&gt;
+    if not @isAllowUser(jid)
+      return&lt;/p&gt;
+
+&lt;p&gt;5, 成功连上gtalk之后, 能用了, happy了一会, 可是机器人比较傻, 才懂简单的那么几个示例命令, 下面是自己扩展它的方法:&lt;br/&gt;
+在src/scripts/路径下, 是命令脚本, 随便捡一个看一眼, 会发现挺简单, 脚本里有一条注释, 会被用作help命令的输出&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;# Commands:&lt;/code&gt;&lt;br/&gt;
+&lt;code&gt;#   hubot email &amp;lt;user@email.com&amp;gt; -s &amp;lt;subject&amp;gt; -m &amp;lt;message&amp;gt; - Sends email with the &amp;lt;subject&amp;gt; &amp;lt;message&amp;gt; to address &amp;lt;user@email.com&amp;gt;&lt;/code&gt;
+就是这行了, 虽然是注释, 不过会被当作hubot help的输出.&lt;/p&gt;
+
+&lt;p&gt;暂时我修改了自带的math.coffee,  计算器么, 原来的居然还跑到google上去来一轮, 然后计算好了返回, 放着现成的eval干吗不用, 危险就危险. 反正我是自己用.&lt;/p&gt;
+
+&lt;p&gt;增加了一个cmd.coffee 接收消息里的参数, js我太菜了, 于是就用exec方法, 把命令全部丢给一个写好的process.py, 然后在py里就可以想干吗就干吗了,  需要注意的是, js里读输出读的是stdout, 如果stdout没东西, 使用msg.send sdtout返回消息时, 可能会是空的, 只需要在process.py里稍做注意即可.
+下面是这个cmd.coffee脚本内容:&lt;/p&gt;
+
+&lt;pre&gt;
+&lt;/code&gt;
+ # Description:
+ #   Email from hubot to any address
+ #
+ # Dependencies:
+ #   None
+ #
+ # Configuration:
+ #   None
+ #
+ # Commands:
+ #   hubot email &lt;user@email.com&gt; -s &lt;subject&gt; -m &lt;message&gt; - Sends email with the &lt;subject&gt; &lt;message&gt; to address &lt;user@email.com&gt;
+ #
+ # Author:
+ #   earlonrails
+ #
+ # Additional Requirements
+ #   unix mail client installed on the system
+
+util = require &#39;util&#39;
+child_process = require &#39;child_process&#39;
+exec = child_process.exec
+
+module.exports = (robot) -&gt;
+  # email by pmail scripts
+  robot.respond /email (.*) -s (.*) -m (.*)/i, (msg) -&gt;
+    mailCommand = &quot;&quot;&quot;python /root/app/hubot/src/scripts/pmail.py -t &#39;#{msg.match[1]}&#39; -s &#39;#{msg.match[2]}&#39; -c &#39;#{msg.match[3]}&#39;&quot;&quot;&quot;
+    exec mailCommand, (error, stdout, stderr) -&gt;
+      msg.send stdout
+
+  # 执行系统命令
+  robot.hear /cmd (.*)/i, (msg) -&gt;
+    if msg.match[1] == &#39;top&#39;
+      exec &#39;top -bn 1&#39;, (error, stdout, stderr) -&gt;
+        msg.send stdout
+    exec msg.match[1], (error, stdout, stderr) -&gt;
+      msg.send stdout
+
+  robot.hear /defage (.*)/i, (msg) -&gt;
+    #term   = &quot;\&quot;#{msg.match[1]}\&quot;&quot;
+    term = msg.match[1]
+    cmd = &quot;&quot;&quot;python /root/app/hubot/process.py --action &#39;#{term}&#39;&quot;&quot;&quot;
+    exec cmd, (error, stdout, stderr) -&gt;
+      msg.send stdout
+
+&lt;/code&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;robot.hear和robot.respond似乎是一样的, 不过robot.hear看起来更符合机器人聊天.
+接下来怎么调教它, 就看你想这么搞了,  以后想到点好玩的, 再给它加上吧. 我的机器人是 robotblabla@gmail.com&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>进程的smaps内存使用分析</title>
+   <link href="http://liutaihua.github.io/2013/04/25/process-smaps-analysis.html"/>
+   <updated>2013-04-25T00:00:00+08:00</updated>
+   <id>urn:uuid:4b73eb0a-ab1f-11e3-9567-040ccecf359c</id>
+   <content type="html">&lt;p&gt;2.6.16后的内核, 对于查看进程内存使用分布, 更方便了. 在/proc/{pid} 路径下有一个smaps文件, 记录了进程内存使用情况, 在老的内核系统上, 这个文件是maps或memap , 而且老的内核下maps或memap文件记录的数据真不是人读的.&lt;/p&gt;
+
+&lt;p&gt;现在有了高内核, 当然可以用起来了.&lt;/p&gt;
+
+&lt;p&gt;smaps文件内容格式是:&lt;/p&gt;
+
+&lt;pre&gt;
+&lt;code&gt;
+7f4913d8f000-7f4913ddd000 r-xp 00000000 fd:00 791940                     /usr/local/boost149/lib/libboost_python.so.1.49.0
+Size:                312 kB
+Rss:                  20 kB
+Pss:                   2 kB
+Shared_Clean:         20 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:           20 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+&lt;/code&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;size：  是进程使用内存空间，并不一定实际分配了物理内存；&lt;/p&gt;
+
+&lt;p&gt;Rss：   &quot;Resident Set Size&quot;，实际驻留&quot;在内存中&quot;的内存数. 不包括已经交换出去的页面。RSS还包括了与其它进程共享的内存区域，通常用于共享库；&lt;/p&gt;
+
+&lt;p&gt;Pss：   Private Rss， Rss中私有的内存页面；&lt;/p&gt;
+
+&lt;p&gt;Shared_Clean：  Rss中和其他进程共享的未改写页面；&lt;/p&gt;
+
+&lt;p&gt;Shared_Dirty：  Rss和其他进程共享的已改写页面；&lt;/p&gt;
+
+&lt;p&gt;Private_Clean：  Rss中改写的私有页面页面；&lt;/p&gt;
+
+&lt;p&gt;Private_Dirty：  Rss中已改写的私有页面页面；&lt;/p&gt;
+
+&lt;p&gt;(其中Dirty页面如果没有交换机制的情况下，应该是不能回收的)&lt;/p&gt;
+
+&lt;p&gt;网上有仁兄使用的过滤分析此文件内容的perl脚本, 借来用:&lt;/p&gt;
+
+&lt;pre&gt;
+&lt;code&gt;
+#!/usr/bin/perl
+
+
+# Copyright Ben Maurer
+# you can distribute this under the MIT/X11 License
+
+
+use Linux::Smaps;
+
+
+my $pid=shift @ARGV;
+unless ($pid) {
+ print &quot;./smem.pl &lt;pid&gt;/n&quot;;
+ exit 1;
+}
+my $map=Linux::Smaps-&gt;new($pid);
+my @VMAs = $map-&gt;vmas;
+
+
+format STDOUT =
+VMSIZE:  @######## kb
+$map-&gt;size
+RSS:     @######## kb total
+$map-&gt;rss
+         @######## kb shared
+$map-&gt;shared_clean + $map-&gt;shared_dirty
+         @######## kb private clean
+$map-&gt;private_clean
+         @######## kb private dirty
+$map-&gt;private_dirty
+.
+
+
+write;
+
+printPrivateMappings ();
+printSharedMappings ();
+
+
+sub sharedMappings () {
+    return grep { ($_-&gt;shared_clean  + $_-&gt;shared_dirty) &gt; 0 } @VMAs;
+}
+
+
+sub privateMappings () {
+    return grep { ($_-&gt;private_clean  + $_-&gt;private_dirty) &gt; 0 } @VMAs;
+}
+
+
+sub printPrivateMappings ()
+{
+    $TYPE = &quot;PRIVATE MAPPINGS&quot;;
+    $^ = &#39;SECTION_HEADER&#39;;
+    $~ = &#39;SECTION_ITEM&#39;;
+    $- = 0;
+    $= = 100000000;
+    foreach  $vma (sort {-($a-&gt;private_dirty &lt;=&gt; $b-&gt;private_dirty)}
+       privateMappings ()) {
+ $size  = $vma-&gt;size;
+ $dirty = $vma-&gt;private_dirty;
+ $clean = $vma-&gt;private_clean;
+ $file  = $vma-&gt;file_name;
+ write;
+    }
+}
+
+
+sub printSharedMappings ()
+{
+    $TYPE = &quot;SHARED MAPPINGS&quot;;
+    $^ = &#39;SECTION_HEADER&#39;;
+    $~ = &#39;SECTION_ITEM&#39;;
+    $- = 0;
+    $= = 100000000;
+
+    foreach  $vma (sort {-(($a-&gt;shared_clean + $a-&gt;shared_dirty)
+      &lt;=&gt;
+      ($b-&gt;shared_clean + $b-&gt;shared_dirty))}
+     sharedMappings ()) {
+
+ $size  = $vma-&gt;size;
+ $dirty = $vma-&gt;shared_dirty;
+ $clean = $vma-&gt;shared_clean;
+ $file  = $vma-&gt;file_name;
+ write;
+
+
+    }
+}
+
+
+format SECTION_HEADER =
+@&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+$TYPE
+@&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; @&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;  @&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;   @&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+&quot;vmsize&quot; &quot;rss clean&quot; &quot;rss dirty&quot; &quot;file&quot;
+.
+
+
+format SECTION_ITEM =
+@####### kb @####### kb @####### kb   @&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+$size $clean $dirty $file
+.
+
+&lt;/code&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;使用之前需要先安装Linux::Smaps模块:
+perl -MCPAN -e &#39;install Linux::Smaps&#39;&lt;/p&gt;
+
+&lt;p&gt;使用之:&lt;/p&gt;
+
+&lt;pre&gt;
+&lt;code&gt;
+[root@211 tmp]# perl p.pl 6490
+VMSIZE:     835412 kb
+RSS:        274928 kb total
+              2880 kb shared
+              8112 kb private clean
+            263936 kb private dirty
+PRIVATE MAPPINGS
+     vmsize   rss clean   rss dirty   file
+  406380 kb     7432 kb   258816 kb   [heap]
+    6272 kb        0 kb     3612 kb
+    4048 kb       28 kb      364 kb   /terminus/crown/bin/ares
+     520 kb       56 kb      216 kb
+     604 kb      112 kb      176 kb
+     260 kb       20 kb      160 kb
+     240 kb       32 kb      128 kb   /usr/lib64/libpython2.6.so.1.0
+     260 kb       44 kb       92 kb
+     772 kb      236 kb       44 kb
+     224 kb        0 kb       44 kb   [stack]
+      56 kb        8 kb       40 kb
+      80 kb       20 kb       36 kb
+      72 kb       12 kb       24 kb   /terminus/crown/bin/ares
+     928 kb        0 kb       24 kb   /usr/lib64/libstdc++.so.6.0.13
+   10240 kb        0 kb       20 kb
+     132 kb        0 kb       16 kb
+      20 kb        0 kb       16 kb
+    1476 kb        0 kb       16 kb   /usr/lib64/libpython2.6.so.1.0
+   10240 kb        0 kb       12 kb
+   10240 kb        0 kb        8 kb
+      16 kb        0 kb        8 kb   /usr/lib64/python2.6/lib-dynload/datetime.so
+       8 kb        0 kb        8 kb   /usr/lib64/libstdc++.so.6.0.13
+       4 kb        0 kb        4 kb   /usr/lib64/python2.6/lib-dynload/syslog.so
+      16 kb       12 kb        4 kb   /lib64/libc-2.12.so
+       4 kb        0 kb        4 kb   /lib64/libc-2.12.so
+       4 kb        0 kb        4 kb   /lib64/libm-2.12.so
+       4 kb        0 kb        4 kb   /lib64/libm-2.12.so
+      28 kb       20 kb        4 kb   /usr/lib64/libstdc++.so.6.0.13
+      84 kb        8 kb        4 kb
+      92 kb        0 kb        4 kb   /lib64/libpthread-2.12.so
+       4 kb        0 kb        4 kb   /lib64/libpthread-2.12.so
+       4 kb        0 kb        4 kb   /lib64/libpthread-2.12.so
+      16 kb        0 kb        4 kb
+      12 kb        4 kb        4 kb   /usr/lib64/libcurl.so.4.1.1
+     128 kb        0 kb        4 kb   /lib64/ld-2.12.so
+       4 kb        0 kb        4 kb   /lib64/ld-2.12.so
+       4 kb        4 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_randommodule.so
+       8 kb        8 kb        0 kb   /usr/lib64/python2.6/lib-dynload/timemodule.so
+       4 kb        4 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_functoolsmodule.so
+       4 kb        4 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_json.so
+       4 kb        4 kb        0 kb   /lib64/librt-2.12.so
+      16 kb        8 kb        0 kb   /usr/local/boost149/lib/libboost_python.so.1.49.0
+       4 kb        4 kb        0 kb   /usr/local/boost149/lib/libboost_system.so.1.49.0
+       8 kb        4 kb        0 kb   /usr/local/boost149/lib/libboost_thread.so.1.49.0
+      16 kb       16 kb        0 kb   /usr/local/lib/libzmq.so.1.0.0
+      12 kb        4 kb        0 kb
+       4 kb        4 kb        0 kb   /lib64/ld-2.12.so
+       4 kb        4 kb        0 kb
+
+SHARED MAPPINGS
+     vmsize   rss clean   rss dirty   file
+    4048 kb      948 kb        0 kb   /terminus/crown/bin/ares
+    1476 kb      784 kb        0 kb   /usr/lib64/libpython2.6.so.1.0
+    1576 kb      448 kb        0 kb   /lib64/libc-2.12.so
+     324 kb      172 kb        0 kb   /usr/lib64/libcurl.so.4.1.1
+     928 kb      160 kb        0 kb   /usr/lib64/libstdc++.so.6.0.13
+     524 kb      104 kb        0 kb   /lib64/libm-2.12.so
+     192 kb       76 kb        0 kb   /usr/local/lib/libzmq.so.1.0.0
+      64 kb       32 kb        0 kb   /usr/lib64/python2.6/lib-dynload/datetime.so
+      72 kb       28 kb        0 kb   /terminus/crown/bin/ares
+      92 kb       28 kb        0 kb   /lib64/libpthread-2.12.so
+     312 kb       20 kb        0 kb   /usr/local/boost149/lib/libboost_python.so.1.49.0
+      12 kb       12 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_json.so
+      96 kb       12 kb        0 kb   /usr/local/boost149/lib/libboost_thread.so.1.49.0
+     128 kb       12 kb        0 kb   /lib64/ld-2.12.so
+       8 kb        8 kb        0 kb   /usr/lib64/python2.6/lib-dynload/syslog.so
+      12 kb        8 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_randommodule.so
+      12 kb        8 kb        0 kb   /usr/lib64/python2.6/lib-dynload/timemodule.so
+       8 kb        8 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_functoolsmodule.so
+      28 kb        4 kb        0 kb   /lib64/librt-2.12.so
+       8 kb        4 kb        0 kb   /usr/local/boost149/lib/libboost_system.so.1.49.0
+       4 kb        4 kb        0 kb   [vdso]
+
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;/code&gt;
+从上面看到rss大小被分成了两个部分: private(私有)和shared(共享).
+private rss就是我们最关心的进程实际占用的内存数.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>tornado源码查看-代码结构和请求流向</title>
+   <link href="http://liutaihua.github.io/2013/04/18/tornado-code-source-structure.html"/>
+   <updated>2013-04-18T00:00:00+08:00</updated>
+   <id>urn:uuid:4b73d4b3-ab1f-11e3-a275-040ccecf359c</id>
+   <content type="html">&lt;p&gt;源码里的结构:&lt;/p&gt;
+
+&lt;pre&gt;
+&lt;code&gt;
+tornado
+├── auth.py
+├── autoreload.py
+├── ca-certificates.crt
+├── curl_httpclient.py
+├── database.py
+├── escape.py
+├── gen.py
+├── httpclient.py
+├── httpserver.py
+├── httputil.py
+├── __init__.py
+├── ioloop.py
+├── iostream.py
+├── locale.py
+├── netutil.py
+├── options.py
+├── platform
+│   ├── auto.py
+│   ├── common.py
+│   ├── __init__.py
+│   ├── interface.py
+│   ├── posix.py
+│   ├── twisted.py
+│   ├── windows.py
+├── process.py
+├── simple_httpclient.py
+├── stack_context.py
+├── template.py
+│   ├── csv_translations
+│   │   └── fr_FR.csv
+│   ├── gettext_translations
+│   │   └── fr_FR
+│   │       └── LC_MESSAGES
+│   ├── __init__.py
+│   ├── README
+│   ├── static
+│   │   └── robots.txt
+│   ├── templates
+│   │   └── utf8.html
+├── util.py
+├── web.py
+├── web.py~
+├── websocket.py
+├── wsgi.py
+&lt;/code&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;花了一些时间,准备看tornado的源码, 下午只看了部分http相关的, 结构理出来, google了部分资料, 然后自己理了理思维, 发现自己理解基本是对的, 在http://ispe54.blogspot.com/2013/04/tornado-1.html这篇文章理解下更加清晰了.&lt;/p&gt;
+
+&lt;p&gt;由简单的hello world程序开始, 看进去源码:&lt;/p&gt;
+
+&lt;p&gt;class MainHandler(tornado.web.RequestHandler):
+    def get(self):
+         return self.finish(&#39;hello world&#39;)&lt;/p&gt;
+
+&lt;pre&gt;
+&lt;code&gt;
+\#初始化一个application类的实例
+class Application(tornado.web.Application):
+    def __init__(self):
+        handlers.append((r&#39;/&#39;, MainHandler))
+        tornado.web.Application.__init__(self, handlers, **config.web_config.settings)
+        self.session_manager = common.session.TornadoSessionManager(config.web_config.settings[&quot;session_secret&quot;],
+            config.web_config.settings[&quot;session_dir&quot;])
+        self.db = common.util.get_user_db()
+        ….
+       
+def main():
+    http_server = tornado.httpserver.HTTPServer(Application(), xheaders=True)
+    http_server.listen(8888)
+    tornado.ioloop.IOLoop.instance().start() 
+
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;1, 先说Application类, 它和RequestHandler同时位于tornado.web模块内,  它总共没多少代码,
+    Application主要是初始化一些option.settings的参数,  将实例代码中的handlers加入到self.handlers中, 最后重写了&lt;strong&gt;call&lt;/strong&gt;函数, 在后面将Application实例传给HTTPServer作为callback,  HTTPServer内会有一系列的方法, 将会调用callback(), 实际就会运行这个&lt;strong&gt;call&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;p&gt;2, tornado.httpserver.HTTPServer 类只是提供一个基础httpserver的方法, httpserver.py和netutil.py 内的TCPServer,这两个文件主要是实现http协议，解析header 和 body， 生成request，回调给appliaction,  在httpserver.py内有一个HTTPConnection, 实现http协议的连接部分. 对于底层的socket, io缓冲等, 是由TCPServer中, 将ioloop, iostream关联在一起实现的.&lt;/p&gt;
+
+&lt;p&gt;源码里说HTTPServer类只是个简单的http协议实现:
+    A server is defined by a request callback that takes an HTTPRequest
+    instance as an argument and writes a valid HTTP response with
+    &lt;code&gt;HTTPRequest.write&lt;/code&gt;. &lt;code&gt;HTTPRequest.finish&lt;/code&gt; finishes the request (but does
+    not necessarily close the connection in the case of HTTP/1.1 keep-alive
+    requests). A simple example server that echoes back the URI you
+    requested::&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    def handle_request(request):
+       message = &quot;You requested %s\n&quot; % request.uri
+       request.write(&quot;HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s&quot; % (
+                     len(message), message))
+       request.finish()
+
+    http_server = httpserver.HTTPServer(handle_request)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;HTTPServer是tornado.netutil.TCPServer的子类,  HTTPServer在构造函数&lt;em&gt;_init&lt;/em&gt;里增加了一些属性, 然后重写了TCPServer的handle_stream:
+    def handle_stream(self, stream, address):
+        HTTPConnection(stream, address, self.request_callback,
+                       self.no_keep_alive, self.xheaders)&lt;/p&gt;
+
+&lt;p&gt;handle_stream 这个方法, 会在TCPServer里被_handle_connection方法调用:
+    def handle_stream(self, stream, address):
+        &quot;&quot;&quot;Override to handle a new &lt;code&gt;IOStream&lt;/code&gt; from an incoming connection.&quot;&quot;&quot;
+        raise NotImplementedError()&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;def _handle_connection(self, connection, address):
+    if self.ssl_options is not None:
+        assert ssl, &quot;Python 2.6+ and OpenSSL required for SSL&quot;
+        try:
+            connection = ssl.wrap_socket(connection,
+                                         server_side=True,
+                                         do_handshake_on_connect=False,
+                                         **self.ssl_options)
+        except ssl.SSLError, err:
+            if err.args[0] == ssl.SSL_ERROR_EOF:
+                return connection.close()
+            else:
+                raise
+        except socket.error, err:
+            if err.args[0] == errno.ECONNABORTED:
+                return connection.close()
+            else:
+                raise
+    try:
+        if self.ssl_options is not None:
+            stream = SSLIOStream(connection, io_loop=self.io_loop)
+        else:
+            stream = IOStream(connection, io_loop=self.io_loop)
+        self.handle_stream(stream, address)
+    except Exception:
+        logging.error(&quot;Error in connection callback&quot;, exc_info=True)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;而_handle_connection会被add_socket调用, 回到最上层, 其实是hello world程序中的http_server.listen(port) 这句, 发起listen, listen方法内会调用add_socket,  而handle_stream中实现的是调用HTTPConnection来处理一系列http协议中的connection部分. 在HTTPConnection中会处理callback,  这个callback就是Application类的&lt;strong&gt;call&lt;/strong&gt;,   最后request数据会传给最终的逻辑处理类web.RequestHandler.&lt;/p&gt;
+
+&lt;p&gt;说起来特别费劲, 做了个思维导图(可能需要翻墙):&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://lh5.ggpht.com/0817hoIHa1WnDSGF0wCk1UuKwEtwl1Iy5P7GfIjkwVX8B76_ZbRcgZAp4VSXq86hPnIPFcYPs3WntKGsN_qt=s1600&quot; &gt;&lt;/p&gt;
+</content>
+ </entry>
+ 
+ 
+</feed>

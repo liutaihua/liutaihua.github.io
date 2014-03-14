@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="liutaihua" />
+    
+    <title>postgres备份和恢复</title>
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link href="/atom.xml" rel="alternate" title="yeah, the stuff" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/github.css">
+    <link rel="stylesheet" href="/media/css/fontawesome.css">
+    <script src="/media/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script> 
+    <script type="text/javascript" src="/media/js/highlight.pack.js"></script>
+    <script type="text/javascript">
+      hljs.initHighlightingOnLoad();
+    </script>
+  </head>
+  <body>
+      <div id="main" role="main">
+        <header>
+          <div id="header">
+            <h1><a title="yeah, the stuff" class="" href="/">yeah, the stuff</a></h1>
+          </div>
+          <nav>
+            
+            <span><a title="Archive" href="/archive.html"><i class="fa fa-list-ul"></i></a></span>
+            
+            <span><a title="Tags" href="/tags.html"><i class="fa fa-tags"></i></a></span>
+            
+            <span><a title="About" href="/about.html"><i class="fa fa-user"></i></a></span>
+            
+            <span><a title="Gallery" href="http://www.flickr.com/photos/liutaihua/"><i class="fa fa-film"></i></a></span>
+            
+            <span><a title="Blogroll" href="/links.html"><i class="fa fa-link"></i></a></span>
+            
+            <span><a title="Subscribe" href="/atom.xml"><i class="fa fa-rss"></i></a></span>
+            
+          </nav>
+        </header>
+        <div id="content">
+        <article>
+  <section class="title">
+    <h2>postgres备份和恢复 </h2>
+  </section>
+  <section class="meta">
+  <span class="time">
+    <time datetime="2013-03-14">2013-03-14</time>
+  </span>
+  
+  <span class="tags">
+    
+    <a href="/tags.html#move from old blog" title="move from old blog">#move from old blog</a>
+    
+    <a href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/2013-03-14-postgres备份和恢复.markdown'>编辑</a>
+  </span>
+  <!-- BEGIN this would not work on any other domain -->
+  <span id="like-wrapper"></span>
+  <script type="text/javascript">
+    var like_shortname      = 'gopherwood';
+    var like_identifier     = 'urn:uuid:4b73abe8-ab1f-11e3-ac0b-040ccecf359c';
+    var like_like_btn       = '&#xf087;';
+    var like_unlike_btn     = '&#xf087;';
+    var like_disable_unlike = true;
+
+    var l = document.createElement('script'); l.type = 'text/javascript'; l.async = true;
+    l.src = 'https://like-waynezhang.rhcloud.com/javascript/widget.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(l);
+  </script>
+  <!-- END this would not work on any other domain -->
+  
+  </section>
+  <section class="post">
+  <h4>备份:</h4>
+
+<p>在postgres.conf配置里指定:</p>
+
+<p>archive_command = 'cp "%p" /data/postgresql/arch/"%f"'</p>
+
+<p>设定:</p>
+
+<p>wal_level=archive</p>
+
+<p>手工备份操作方式:</p>
+
+<p>psql cli后:</p>
+
+<p>select pg_start_backup(' test backup')</p>
+
+<p>然后:</p>
+
+<p>select pg_stop_backup() ,stop执行时,就会执行archive_command中定义的backup.</p>
+
+<h4>从wal备份中恢复:</h4>
+
+<p>创建一个recovery.conf:</p>
+
+<p>cp /usr/pgsql-9.2/share/recovery.conf.sample recovery.conf</p>
+
+<p>在recovery.conf配置中指定:</p>
+
+<p>restore_command = 'cp /data/postgresql/arch/%f %p'</p>
+
+<p>然后重新启动postgresql, 系统会检查到recovery.conf文件的存在,并执行restore, 然后正常启动后,会自动将recovery.conf文件名改为recovery.conf.done</p>
+
+  </section>
+  
+  <div class="divider">
+    <span>
+    
+    <a href="/2013/03/12/cron-task-with-datetime-obj.html"><i class="fa fa-chevron-left"></i></a>
+    
+    </span>
+    <!-- BEGIN comment icon
+    <span><a href="javascript:leave_comment();" id="leave_comment_link"><i class="fa fa-comment-o"></i></a></span>
+    <span><a href="javascript:collapse_comment();" id="collapse_comment_link" style="display:none;"><i class="fa fa-chevron-up"></i></a></span>
+      END comment icon -->
+
+    <span>
+    
+    <a href="/2013/04/07/rsyslog-template-feature.html"><i class="fa fa-chevron-right"></i></a>
+    
+    </span>
+  </div>
+
+  <!-- BEGIN comment
+  <section class="comment">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'gopherwood';
+      var disqus_identifier = 'urn:uuid:4b73abe8-ab1f-11e3-ac0b-040ccecf359c';
+
+      function leave_comment() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          $("#leave_comment_link").css("display", "none");
+          $("#collapse_comment_link").css("display", "");
+      };
+      function collapse_comment() {
+          // document.getElementById("disqus_thread").innerHTML = '';
+          $("#disqus_thread").slideUp(400, function() {
+              $("#disqus_thread").empty();
+              $("#leave_comment_link").css("display", "");
+              $("#collapse_comment_link").css("display", "none");
+              $("#disqus_thread").css("display", "");
+          });
+      };
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </section>
+  END comment -->
+  
+</article>
+
+        </div>
+        <footer>
+          <div>
+            
+            &copy; 2013 ~ 2014 liutaihua | powered by jekyll | thanks <a href="http://lhzhang.com" title="sext vi">sext vi</a> | fork <a href="https://github.com/liutaihua/liutaihua.github.io" title="fork me">me</a>
+          </div>
+        </footer>
+      </div> <!-- main -->
+  </body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="liutaihua" />
+    
+    <title>zmq 异步消息队列</title>
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link href="/atom.xml" rel="alternate" title="yeah, the stuff" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/github.css">
+    <link rel="stylesheet" href="/media/css/fontawesome.css">
+    <script src="/media/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script> 
+    <script type="text/javascript" src="/media/js/highlight.pack.js"></script>
+    <script type="text/javascript">
+      hljs.initHighlightingOnLoad();
+    </script>
+  </head>
+  <body>
+      <div id="main" role="main">
+        <header>
+          <div id="header">
+            <h1><a title="yeah, the stuff" class="" href="/">yeah, the stuff</a></h1>
+          </div>
+          <nav>
+            
+            <span><a title="Archive" href="/archive.html"><i class="fa fa-list-ul"></i></a></span>
+            
+            <span><a title="Tags" href="/tags.html"><i class="fa fa-tags"></i></a></span>
+            
+            <span><a title="About" href="/about.html"><i class="fa fa-user"></i></a></span>
+            
+            <span><a title="Gallery" href="http://www.flickr.com/photos/liutaihua/"><i class="fa fa-film"></i></a></span>
+            
+            <span><a title="Blogroll" href="/links.html"><i class="fa fa-link"></i></a></span>
+            
+            <span><a title="Subscribe" href="/atom.xml"><i class="fa fa-rss"></i></a></span>
+            
+          </nav>
+        </header>
+        <div id="content">
+        <article>
+  <section class="title">
+    <h2>zmq 异步消息队列 </h2>
+  </section>
+  <section class="meta">
+  <span class="time">
+    <time datetime="2013-03-07">2013-03-07</time>
+  </span>
+  
+  <span class="tags">
+    
+    <a href="/tags.html#move from old blog" title="move from old blog">#move from old blog</a>
+    
+    <a href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/2013-03-07-zmq 异步消息队列.markdown'>编辑</a>
+  </span>
+  <!-- BEGIN this would not work on any other domain -->
+  <span id="like-wrapper"></span>
+  <script type="text/javascript">
+    var like_shortname      = 'gopherwood';
+    var like_identifier     = 'urn:uuid:4b736217-ab1f-11e3-9803-040ccecf359c';
+    var like_like_btn       = '&#xf087;';
+    var like_unlike_btn     = '&#xf087;';
+    var like_disable_unlike = true;
+
+    var l = document.createElement('script'); l.type = 'text/javascript'; l.async = true;
+    l.src = 'https://like-waynezhang.rhcloud.com/javascript/widget.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(l);
+  </script>
+  <!-- END this would not work on any other domain -->
+  
+  </section>
+  <section class="post">
+  <h4>zmq  push--pull 方式</h4>
+
+<p><strong>在ZMQ中是淡化服务端和客户端的概念的</strong>:</p>
+
+<ul>
+<li>相对的服务端:</li>
+<li>创建一个SUBer订阅者bind一个端口, 用来接收数据</li>
+<li>创建一个zmq.PUSH</li>
+<li>创建一个zmq poller轮询对象,</li>
+<li>将sub注册到poller, 并赋予zmq.POLLIN意味轮询进来的msg</li>
+<li>创建sock=poller.poll()开始轮询</li>
+<li>当有msg发送到suber订阅者的监听端口后, sock.recv()方法将会收到msg,</li>
+<li>最后使用之前创建的pusher, 使用pusher.send(msg)将消息推送到连接到的puller, 如果无puller, 此msg将被丢弃</li>
+</ul>
+
+
+<p><strong>相对的client</strong>:</p>
+
+<ul>
+<li>创建zmq.PULL 连接到服务端接收push过来的消息</li>
+</ul>
+
+
+<p><strong>消息创建者</strong>:</p>
+
+<ul>
+<li>创建一个zmq.PUB对象, 意味着此对象为一个消息发布者: pub = context.socket(zmq.PUB)</li>
+<li>连接到服务端的suber的监听端口: pub.connect('tcp://%s:%s' % (sub_host, sub_port))</li>
+<li>最后将需要发送的msg, 使用pub.send(msg)发送给suber订阅者</li>
+</ul>
+
+
+<p><strong>代码示例:</strong></p>
+
+<p>对于服务端:</p>
+
+<pre>
+<code>
+import zmq
+context = zmq.Context()
+
+
+
+"""定义一个订阅者, 注意的是,这里的订阅者是从服务端来看, 
+这个method是订阅者(从这个角度来说服务端也能看成是客户端了), 
+对应的client创建一个发布者(PUB)时, 使用connect连接的就是此服务端的订阅者."""
+def create_subscriber(port):
+    sub = context.socket(zmq.SUB)
+    sub.bind('tcp://*:%s' % port)
+    sub.setsockopt(zmq.SUBSCRIBE, '')
+    return sub
+
+"""此模式在服务端暂时没用用到"""
+def create_publisher(port):
+    pub = context.socket(zmq.PUB)
+    pub.bind('tcp://*:%s' % port)
+    pub.setsockopt(zmq.HWM, 0)
+    return pub
+
+
+"""定义个推送者, 如果有client连上此pusher, 当有新消息时,
+client的pull.recv()将会获得msg"""
+def create_pusher(port):
+    pusher = context.socket(zmq.PUSH)
+    pusher.bind('tcp://*:%s' % port)
+    return pusher
+    
+    
+def main():
+    """初始化函数方法"""
+    sub = create_subscriber(args.sub_port)
+    pub = create_publisher(args.pub_port)
+    pusher = create_pusher(args.push_port)
+
+""" 创建一个Poller初始化， 将sub(订阅者)注册到此Poller, 并使用POLLIN参数, 
+在后面的poller.pull()方法中, 将能pull到最新的,从client程序发到sub来的消息,
+最后使用pub和pusher将消息send出去"""
+    poller = zmq.Poller()
+    poller.register(sub, zmq.POLLIN)
+
+    while True:
+        socks = poller.poll()  \# 创建socks
+        for k, v in socks:
+           """ 获取消息,此消息实际是由client程序的pub发送到此server的sub,
+           然后经由poller.register, 被poller.poll()实例经由recv方法获取"""
+            message = k.recv()   
+            
+            pub.send(message)
+            # FIXME: Use gevent instead.
+            try:
+                \# 使用pusher将msg推送给client程序的puller.recv, 
+                pusher.send(message.split(' ', 1)[-1], zmq.NOBLOCK)
+            except:
+                pass
+</code>
+</pre>
+
+
+<p><strong>客户端:</strong></p>
+
+<pre>
+<code>
+import zmq
+context = zmq.Context()
+
+
+
+"""创建一个发布者, 发布者连接到server程序的订阅者, 产生msg后send, 
+其他语言比如cpp, 也是一样连
+接的是上面server程序的sub, 发送mq"""
+def pub():
+    pub = context.socket(zmq.PUB)
+    pub.connect('tcp://%s:%s' % (sub_host, sub_port))
+    while True:
+        msg = 'abc hello' + str(time.time())
+        pub.send(msg)
+        print 'sending', msg
+        time.sleep(1)
+
+
+\# 暂时没有用到, 此仅作示例
+def sub():
+    sub = context.socket(zmq.SUB)
+    sub.setsockopt(zmq.SUBSCRIBE, '')
+    sub.connect('tcp://%s:%s' % (pub_host, pub_port))
+
+    while True:
+        msg = sub.recv()
+        print 'Got:', msg
+
+
+"""创建一个puller, 连接的是server程序中的pusher, server端pusher有新msg时, 会push到此puller"""
+def pull():
+    pull = context.socket(zmq.PULL)
+    pull.connect('tcp://%s:%s' % (pusher_host, pusher_port))
+
+    """一个死循环, 不断pull新msg, 接收到msg后根据msg再进行相关业务逻辑,
+    一般msg采用json格式, 能非常方便处理不能语言程序之间, 不同进程之间的通信."""
+    while True:
+        msg = pull.recv()
+        print 'Got: ', msg
+</code>
+</pre>
+
+
+  </section>
+  
+  <div class="divider">
+    <span>
+    
+    <a href="/2013/02/19/pptp-vpn-iptables.html"><i class="fa fa-chevron-left"></i></a>
+    
+    </span>
+    <!-- BEGIN comment icon
+    <span><a href="javascript:leave_comment();" id="leave_comment_link"><i class="fa fa-comment-o"></i></a></span>
+    <span><a href="javascript:collapse_comment();" id="collapse_comment_link" style="display:none;"><i class="fa fa-chevron-up"></i></a></span>
+      END comment icon -->
+
+    <span>
+    
+    <a href="/2013/03/07/mount-kvm-img.html"><i class="fa fa-chevron-right"></i></a>
+    
+    </span>
+  </div>
+
+  <!-- BEGIN comment
+  <section class="comment">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'gopherwood';
+      var disqus_identifier = 'urn:uuid:4b736217-ab1f-11e3-9803-040ccecf359c';
+
+      function leave_comment() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          $("#leave_comment_link").css("display", "none");
+          $("#collapse_comment_link").css("display", "");
+      };
+      function collapse_comment() {
+          // document.getElementById("disqus_thread").innerHTML = '';
+          $("#disqus_thread").slideUp(400, function() {
+              $("#disqus_thread").empty();
+              $("#leave_comment_link").css("display", "");
+              $("#collapse_comment_link").css("display", "none");
+              $("#disqus_thread").css("display", "");
+          });
+      };
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </section>
+  END comment -->
+  
+</article>
+
+        </div>
+        <footer>
+          <div>
+            
+            &copy; 2013 ~ 2014 liutaihua | powered by jekyll | thanks <a href="http://lhzhang.com" title="sext vi">sext vi</a> | fork <a href="https://github.com/liutaihua/liutaihua.github.io" title="fork me">me</a>
+          </div>
+        </footer>
+      </div> <!-- main -->
+  </body>
+</html>

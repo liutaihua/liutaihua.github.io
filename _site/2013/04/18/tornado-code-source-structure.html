@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="liutaihua" />
+    
+    <title>tornado源码查看-代码结构和请求流向</title>
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link href="/atom.xml" rel="alternate" title="yeah, the stuff" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/github.css">
+    <link rel="stylesheet" href="/media/css/fontawesome.css">
+    <script src="/media/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script> 
+    <script type="text/javascript" src="/media/js/highlight.pack.js"></script>
+    <script type="text/javascript">
+      hljs.initHighlightingOnLoad();
+    </script>
+  </head>
+  <body>
+      <div id="main" role="main">
+        <header>
+          <div id="header">
+            <h1><a title="yeah, the stuff" class="" href="/">yeah, the stuff</a></h1>
+          </div>
+          <nav>
+            
+            <span><a title="Archive" href="/archive.html"><i class="fa fa-list-ul"></i></a></span>
+            
+            <span><a title="Tags" href="/tags.html"><i class="fa fa-tags"></i></a></span>
+            
+            <span><a title="About" href="/about.html"><i class="fa fa-user"></i></a></span>
+            
+            <span><a title="Gallery" href="http://www.flickr.com/photos/liutaihua/"><i class="fa fa-film"></i></a></span>
+            
+            <span><a title="Blogroll" href="/links.html"><i class="fa fa-link"></i></a></span>
+            
+            <span><a title="Subscribe" href="/atom.xml"><i class="fa fa-rss"></i></a></span>
+            
+          </nav>
+        </header>
+        <div id="content">
+        <article>
+  <section class="title">
+    <h2>tornado源码查看-代码结构和请求流向 </h2>
+  </section>
+  <section class="meta">
+  <span class="time">
+    <time datetime="2013-04-18">2013-04-18</time>
+  </span>
+  
+  <span class="tags">
+    
+    <a href="/tags.html#move from old blog" title="move from old blog">#move from old blog</a>
+    
+    <a href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/2013-04-18-tornado源码查看-代码结构和请求流向.markdown'>编辑</a>
+  </span>
+  <!-- BEGIN this would not work on any other domain -->
+  <span id="like-wrapper"></span>
+  <script type="text/javascript">
+    var like_shortname      = 'gopherwood';
+    var like_identifier     = 'urn:uuid:4b73d4b3-ab1f-11e3-a275-040ccecf359c';
+    var like_like_btn       = '&#xf087;';
+    var like_unlike_btn     = '&#xf087;';
+    var like_disable_unlike = true;
+
+    var l = document.createElement('script'); l.type = 'text/javascript'; l.async = true;
+    l.src = 'https://like-waynezhang.rhcloud.com/javascript/widget.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(l);
+  </script>
+  <!-- END this would not work on any other domain -->
+  
+  </section>
+  <section class="post">
+  <p>源码里的结构:</p>
+
+<pre>
+<code>
+tornado
+├── auth.py
+├── autoreload.py
+├── ca-certificates.crt
+├── curl_httpclient.py
+├── database.py
+├── escape.py
+├── gen.py
+├── httpclient.py
+├── httpserver.py
+├── httputil.py
+├── __init__.py
+├── ioloop.py
+├── iostream.py
+├── locale.py
+├── netutil.py
+├── options.py
+├── platform
+│   ├── auto.py
+│   ├── common.py
+│   ├── __init__.py
+│   ├── interface.py
+│   ├── posix.py
+│   ├── twisted.py
+│   ├── windows.py
+├── process.py
+├── simple_httpclient.py
+├── stack_context.py
+├── template.py
+│   ├── csv_translations
+│   │   └── fr_FR.csv
+│   ├── gettext_translations
+│   │   └── fr_FR
+│   │       └── LC_MESSAGES
+│   ├── __init__.py
+│   ├── README
+│   ├── static
+│   │   └── robots.txt
+│   ├── templates
+│   │   └── utf8.html
+├── util.py
+├── web.py
+├── web.py~
+├── websocket.py
+├── wsgi.py
+</code>
+</pre>
+
+
+<p>花了一些时间,准备看tornado的源码, 下午只看了部分http相关的, 结构理出来, google了部分资料, 然后自己理了理思维, 发现自己理解基本是对的, 在http://ispe54.blogspot.com/2013/04/tornado-1.html这篇文章理解下更加清晰了.</p>
+
+<p>由简单的hello world程序开始, 看进去源码:</p>
+
+<p>class MainHandler(tornado.web.RequestHandler):
+    def get(self):
+         return self.finish('hello world')</p>
+
+<pre>
+<code>
+\#初始化一个application类的实例
+class Application(tornado.web.Application):
+    def __init__(self):
+        handlers.append((r'/', MainHandler))
+        tornado.web.Application.__init__(self, handlers, **config.web_config.settings)
+        self.session_manager = common.session.TornadoSessionManager(config.web_config.settings["session_secret"],
+            config.web_config.settings["session_dir"])
+        self.db = common.util.get_user_db()
+        ….
+       
+def main():
+    http_server = tornado.httpserver.HTTPServer(Application(), xheaders=True)
+    http_server.listen(8888)
+    tornado.ioloop.IOLoop.instance().start() 
+
+</pre>
+
+
+<p></code></p>
+
+<p>1, 先说Application类, 它和RequestHandler同时位于tornado.web模块内,  它总共没多少代码,
+    Application主要是初始化一些option.settings的参数,  将实例代码中的handlers加入到self.handlers中, 最后重写了<strong>call</strong>函数, 在后面将Application实例传给HTTPServer作为callback,  HTTPServer内会有一系列的方法, 将会调用callback(), 实际就会运行这个<strong>call</strong>:</p>
+
+<p>2, tornado.httpserver.HTTPServer 类只是提供一个基础httpserver的方法, httpserver.py和netutil.py 内的TCPServer,这两个文件主要是实现http协议，解析header 和 body， 生成request，回调给appliaction,  在httpserver.py内有一个HTTPConnection, 实现http协议的连接部分. 对于底层的socket, io缓冲等, 是由TCPServer中, 将ioloop, iostream关联在一起实现的.</p>
+
+<p>源码里说HTTPServer类只是个简单的http协议实现:
+    A server is defined by a request callback that takes an HTTPRequest
+    instance as an argument and writes a valid HTTP response with
+    <code>HTTPRequest.write</code>. <code>HTTPRequest.finish</code> finishes the request (but does
+    not necessarily close the connection in the case of HTTP/1.1 keep-alive
+    requests). A simple example server that echoes back the URI you
+    requested::</p>
+
+<pre><code>    def handle_request(request):
+       message = "You requested %s\n" % request.uri
+       request.write("HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s" % (
+                     len(message), message))
+       request.finish()
+
+    http_server = httpserver.HTTPServer(handle_request)
+</code></pre>
+
+<p>HTTPServer是tornado.netutil.TCPServer的子类,  HTTPServer在构造函数<em>_init</em>里增加了一些属性, 然后重写了TCPServer的handle_stream:
+    def handle_stream(self, stream, address):
+        HTTPConnection(stream, address, self.request_callback,
+                       self.no_keep_alive, self.xheaders)</p>
+
+<p>handle_stream 这个方法, 会在TCPServer里被_handle_connection方法调用:
+    def handle_stream(self, stream, address):
+        """Override to handle a new <code>IOStream</code> from an incoming connection."""
+        raise NotImplementedError()</p>
+
+<pre><code>def _handle_connection(self, connection, address):
+    if self.ssl_options is not None:
+        assert ssl, "Python 2.6+ and OpenSSL required for SSL"
+        try:
+            connection = ssl.wrap_socket(connection,
+                                         server_side=True,
+                                         do_handshake_on_connect=False,
+                                         **self.ssl_options)
+        except ssl.SSLError, err:
+            if err.args[0] == ssl.SSL_ERROR_EOF:
+                return connection.close()
+            else:
+                raise
+        except socket.error, err:
+            if err.args[0] == errno.ECONNABORTED:
+                return connection.close()
+            else:
+                raise
+    try:
+        if self.ssl_options is not None:
+            stream = SSLIOStream(connection, io_loop=self.io_loop)
+        else:
+            stream = IOStream(connection, io_loop=self.io_loop)
+        self.handle_stream(stream, address)
+    except Exception:
+        logging.error("Error in connection callback", exc_info=True)
+</code></pre>
+
+<p>而_handle_connection会被add_socket调用, 回到最上层, 其实是hello world程序中的http_server.listen(port) 这句, 发起listen, listen方法内会调用add_socket,  而handle_stream中实现的是调用HTTPConnection来处理一系列http协议中的connection部分. 在HTTPConnection中会处理callback,  这个callback就是Application类的<strong>call</strong>,   最后request数据会传给最终的逻辑处理类web.RequestHandler.</p>
+
+<p>说起来特别费劲, 做了个思维导图(可能需要翻墙):</p>
+
+<p><img src="http://lh5.ggpht.com/0817hoIHa1WnDSGF0wCk1UuKwEtwl1Iy5P7GfIjkwVX8B76_ZbRcgZAp4VSXq86hPnIPFcYPs3WntKGsN_qt=s1600" ></p>
+
+  </section>
+  
+  <div class="divider">
+    <span>
+    
+    <a href="/2013/04/18/python-convert-number-to-bin-list.html"><i class="fa fa-chevron-left"></i></a>
+    
+    </span>
+    <!-- BEGIN comment icon
+    <span><a href="javascript:leave_comment();" id="leave_comment_link"><i class="fa fa-comment-o"></i></a></span>
+    <span><a href="javascript:collapse_comment();" id="collapse_comment_link" style="display:none;"><i class="fa fa-chevron-up"></i></a></span>
+      END comment icon -->
+
+    <span>
+    
+    <a href="/2013/04/25/process-smaps-analysis.html"><i class="fa fa-chevron-right"></i></a>
+    
+    </span>
+  </div>
+
+  <!-- BEGIN comment
+  <section class="comment">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'gopherwood';
+      var disqus_identifier = 'urn:uuid:4b73d4b3-ab1f-11e3-a275-040ccecf359c';
+
+      function leave_comment() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          $("#leave_comment_link").css("display", "none");
+          $("#collapse_comment_link").css("display", "");
+      };
+      function collapse_comment() {
+          // document.getElementById("disqus_thread").innerHTML = '';
+          $("#disqus_thread").slideUp(400, function() {
+              $("#disqus_thread").empty();
+              $("#leave_comment_link").css("display", "");
+              $("#collapse_comment_link").css("display", "none");
+              $("#disqus_thread").css("display", "");
+          });
+      };
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </section>
+  END comment -->
+  
+</article>
+
+        </div>
+        <footer>
+          <div>
+            
+            &copy; 2013 ~ 2014 liutaihua | powered by jekyll | thanks <a href="http://lhzhang.com" title="sext vi">sext vi</a> | fork <a href="https://github.com/liutaihua/liutaihua.github.io" title="fork me">me</a>
+          </div>
+        </footer>
+      </div> <!-- main -->
+  </body>
+</html>

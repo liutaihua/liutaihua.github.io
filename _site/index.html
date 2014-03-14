@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="liutaihua" />
+    
+    <title>yeah, the stuff</title>
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link href="/atom.xml" rel="alternate" title="yeah, the stuff" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/github.css">
+    <link rel="stylesheet" href="/media/css/fontawesome.css">
+    <script src="/media/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script> 
+    <script type="text/javascript" src="/media/js/highlight.pack.js"></script>
+    <script type="text/javascript">
+      hljs.initHighlightingOnLoad();
+    </script>
+  </head>
+  <body>
+      <div id="main" role="main">
+        <header>
+          <div id="header">
+            <h1><a title="yeah, the stuff" class="" href="/">yeah, the stuff</a></h1>
+          </div>
+          <nav>
+            
+            <span><a title="Archive" href="/archive.html"><i class="fa fa-list-ul"></i></a></span>
+            
+            <span><a title="Tags" href="/tags.html"><i class="fa fa-tags"></i></a></span>
+            
+            <span><a title="About" href="/about.html"><i class="fa fa-user"></i></a></span>
+            
+            <span><a title="Gallery" href="http://www.flickr.com/photos/liutaihua/"><i class="fa fa-film"></i></a></span>
+            
+            <span><a title="Blogroll" href="/links.html"><i class="fa fa-link"></i></a></span>
+            
+            <span><a title="Subscribe" href="/atom.xml"><i class="fa fa-rss"></i></a></span>
+            
+          </nav>
+        </header>
+        <div id="content">
+        <div>
+  <ul class="listing">
+  
+  <article class="content">
+    <section class="title">
+      <h2><a href="/2014/03/14/tcp-kernel-net.core.somaxconn-backlog.html">tcp-kernel-net.core.somaxconn-backlog</a></h2>
+    </section>
+    <section class="meta">
+    <span class="time">
+      <time datetime="2014-03-14">2014-03-14</time>
+    </span>
+    
+    <span class="tags">
+      
+      <a href="/tags.html#-tcp" title="-tcp">#-tcp</a>
+      
+      <a href="/tags.html#-kernel" title="-kernel">#-kernel</a>
+      
+    </span>
+    
+    <!-- BEGIN this would not work on any other domain -->
+    <span id="like-wrapper"></span>
+    <script type="text/javascript">
+      var like_shortname      = 'gopherwood';
+      var like_identifier     = 'urn:uuid:cd45f762-d157-4a2c-854e-eaa6d4070247';
+      var like_like_btn       = '&#xf087;';
+      var like_unlike_btn     = '&#xf087;';
+      var like_disable_unlike = true;
+
+      var l = document.createElement('script'); l.type = 'text/javascript'; l.async = true;
+      l.src = 'https://like-waynezhang.rhcloud.com/javascript/widget.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(l);
+    </script>
+    <!-- END this would not work on any other domain -->
+    </section>
+    <section class="post">
+    <p>一个新服上线, 玩家人数因推广, 较以前的服在线人数大增,  而且由于物理机器上已经存在以前的几个服, 这次新服上了之后在线人数到一定量就会产生掉线的情况, 很奇怪,  怀疑过sysctl.conf 的range_port设的不够用, 或time_waite过大,  但实际这2个值都应该在正常范围内,  但是还是优化了一下回收time_waite的速度, 以及加大range_port,  最后还是不奏效.</p>
+
+<p>由于我们每个服上,  有2个服务进程之间会使用127.0.0.1产生短连接, 所以有比较大的tcp断开后的未关闭部分, 但是原因并不在此.</p>
+
+<p>最后查到了net.core.somaxconn  somaxconn这个是os限制单个listen端口的tcp队列长度,  优化之前其实已经改成了1024(系统默认是128),  但是由于新服并发量比较大, 突破这个数字是有可能的,  果断加大了net.core.somaxconn数量到32768, 肯定足够大了, 继续观察.</p>
+
+<p>同时看了下关于tcp的backlog选项, 这个是除了os层的somaxconn外, 应用层在一个socket  listen的时候设定的.
+对于一个listening socket，kernel维护者两个队列：
+1.一个未完成连接的队列，此队列维护着那些已收到了客户端SYN分节信息，等待完成三路握手的连接，socket的状态是SYN_RCVD</p>
+
+<p>2.一个已完成的连接的队列，此队列包含了那些已经完成三路握手的连接，socket的状态是ESTABLISHED</p>
+
+<p>backlog参数历史上被定义为上面两个队列的大小之和</p>
+
+<p>Berkely实现中的backlog值为上面两队列之和再乘以1.5</p>
+
+<p>当客户端的第一个SYN到达的时候，TCP会在未完成队列中增加一个新的记录然后回复给客户端三路握手中的第二个分节(服务端的SYN和针对客户端的ACK)，这条记录会在未完成队列中一直存在，直到三路握手中的最后一个分节到达，或者直到超时(Berkeley时间将这个超时定义为75秒)</p>
+
+<p>如果当客户端SYN到达的时候队列已满，TCP将会忽略后续到达的SYN，但是不会给客户端发送RST信息，因为此时允许客户端重传SYN分节，如果返回错误信息，那么客户端将无法分清到底是服务端对应端口上没有相应应用程序还是服务端对应端口上队列已满这两种情况</p>
+
+    </section>
+    </article>
+  
+  </ul>
+  <div class="divider"></div>
+  <ul class="listing main-listing">
+    <li class="listing-seperator">Happend earlier this year</i>
+  
+  
+    
+    
+    <li class="listing-item">
+      <time datetime="2014-03-14">2014-03-14</time>
+      <a href="/2014/03/14/move-blog-to-github.io.html" title="move-blog-to-github.io">move-blog-to-github.io</a>
+    </li>
+  
+    
+    
+    <li class="listing-item">
+      <time datetime="2014-03-14">2014-03-14</time>
+      <a href="/2014/03/14/about-tcp-time_wait-status.html" title="about-tcp-time_wait-status">about-tcp-time_wait-status</a>
+    </li>
+  
+    
+    
+    <li class="listing-item">
+      <time datetime="2014-03-13">2014-03-13</time>
+      <a href="/2014/03/13/some-note-of-cpp-gameserver.html" title="some-note-of-cpp-gameserver">some-note-of-cpp-gameserver</a>
+    </li>
+  
+    
+    
+    
+    <li class="listing-seperator"><a href="/archive.html">Long long ago</a></li>
+  </ul>
+</div>
+
+
+        </div>
+        <footer>
+          <div>
+            
+            &copy; 2013 ~ 2014 liutaihua | powered by jekyll | thanks <a href="http://lhzhang.com" title="sext vi">sext vi</a> | fork <a href="https://github.com/liutaihua/liutaihua.github.io" title="fork me">me</a>
+          </div>
+        </footer>
+      </div> <!-- main -->
+  </body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="liutaihua" />
+    
+    <title>进程的smaps内存使用分析</title>
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link href="/atom.xml" rel="alternate" title="yeah, the stuff" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/github.css">
+    <link rel="stylesheet" href="/media/css/fontawesome.css">
+    <script src="/media/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script> 
+    <script type="text/javascript" src="/media/js/highlight.pack.js"></script>
+    <script type="text/javascript">
+      hljs.initHighlightingOnLoad();
+    </script>
+  </head>
+  <body>
+      <div id="main" role="main">
+        <header>
+          <div id="header">
+            <h1><a title="yeah, the stuff" class="" href="/">yeah, the stuff</a></h1>
+          </div>
+          <nav>
+            
+            <span><a title="Archive" href="/archive.html"><i class="fa fa-list-ul"></i></a></span>
+            
+            <span><a title="Tags" href="/tags.html"><i class="fa fa-tags"></i></a></span>
+            
+            <span><a title="About" href="/about.html"><i class="fa fa-user"></i></a></span>
+            
+            <span><a title="Gallery" href="http://www.flickr.com/photos/liutaihua/"><i class="fa fa-film"></i></a></span>
+            
+            <span><a title="Blogroll" href="/links.html"><i class="fa fa-link"></i></a></span>
+            
+            <span><a title="Subscribe" href="/atom.xml"><i class="fa fa-rss"></i></a></span>
+            
+          </nav>
+        </header>
+        <div id="content">
+        <article>
+  <section class="title">
+    <h2>进程的smaps内存使用分析 </h2>
+  </section>
+  <section class="meta">
+  <span class="time">
+    <time datetime="2013-04-25">2013-04-25</time>
+  </span>
+  
+  <span class="tags">
+    
+    <a href="/tags.html#move from old blog" title="move from old blog">#move from old blog</a>
+    
+    <a href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/2013-04-25-进程的smaps内存使用分析.markdown'>编辑</a>
+  </span>
+  <!-- BEGIN this would not work on any other domain -->
+  <span id="like-wrapper"></span>
+  <script type="text/javascript">
+    var like_shortname      = 'gopherwood';
+    var like_identifier     = 'urn:uuid:4b73eb0a-ab1f-11e3-9567-040ccecf359c';
+    var like_like_btn       = '&#xf087;';
+    var like_unlike_btn     = '&#xf087;';
+    var like_disable_unlike = true;
+
+    var l = document.createElement('script'); l.type = 'text/javascript'; l.async = true;
+    l.src = 'https://like-waynezhang.rhcloud.com/javascript/widget.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(l);
+  </script>
+  <!-- END this would not work on any other domain -->
+  
+  </section>
+  <section class="post">
+  <p>2.6.16后的内核, 对于查看进程内存使用分布, 更方便了. 在/proc/{pid} 路径下有一个smaps文件, 记录了进程内存使用情况, 在老的内核系统上, 这个文件是maps或memap , 而且老的内核下maps或memap文件记录的数据真不是人读的.</p>
+
+<p>现在有了高内核, 当然可以用起来了.</p>
+
+<p>smaps文件内容格式是:</p>
+
+<pre>
+<code>
+7f4913d8f000-7f4913ddd000 r-xp 00000000 fd:00 791940                     /usr/local/boost149/lib/libboost_python.so.1.49.0
+Size:                312 kB
+Rss:                  20 kB
+Pss:                   2 kB
+Shared_Clean:         20 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:           20 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+</code>
+</pre>
+
+
+<p>size：  是进程使用内存空间，并不一定实际分配了物理内存；</p>
+
+<p>Rss：   "Resident Set Size"，实际驻留"在内存中"的内存数. 不包括已经交换出去的页面。RSS还包括了与其它进程共享的内存区域，通常用于共享库；</p>
+
+<p>Pss：   Private Rss， Rss中私有的内存页面；</p>
+
+<p>Shared_Clean：  Rss中和其他进程共享的未改写页面；</p>
+
+<p>Shared_Dirty：  Rss和其他进程共享的已改写页面；</p>
+
+<p>Private_Clean：  Rss中改写的私有页面页面；</p>
+
+<p>Private_Dirty：  Rss中已改写的私有页面页面；</p>
+
+<p>(其中Dirty页面如果没有交换机制的情况下，应该是不能回收的)</p>
+
+<p>网上有仁兄使用的过滤分析此文件内容的perl脚本, 借来用:</p>
+
+<pre>
+<code>
+#!/usr/bin/perl
+
+
+# Copyright Ben Maurer
+# you can distribute this under the MIT/X11 License
+
+
+use Linux::Smaps;
+
+
+my $pid=shift @ARGV;
+unless ($pid) {
+ print "./smem.pl <pid>/n";
+ exit 1;
+}
+my $map=Linux::Smaps->new($pid);
+my @VMAs = $map->vmas;
+
+
+format STDOUT =
+VMSIZE:  @######## kb
+$map->size
+RSS:     @######## kb total
+$map->rss
+         @######## kb shared
+$map->shared_clean + $map->shared_dirty
+         @######## kb private clean
+$map->private_clean
+         @######## kb private dirty
+$map->private_dirty
+.
+
+
+write;
+
+printPrivateMappings ();
+printSharedMappings ();
+
+
+sub sharedMappings () {
+    return grep { ($_->shared_clean  + $_->shared_dirty) > 0 } @VMAs;
+}
+
+
+sub privateMappings () {
+    return grep { ($_->private_clean  + $_->private_dirty) > 0 } @VMAs;
+}
+
+
+sub printPrivateMappings ()
+{
+    $TYPE = "PRIVATE MAPPINGS";
+    $^ = 'SECTION_HEADER';
+    $~ = 'SECTION_ITEM';
+    $- = 0;
+    $= = 100000000;
+    foreach  $vma (sort {-($a->private_dirty <=> $b->private_dirty)}
+       privateMappings ()) {
+ $size  = $vma->size;
+ $dirty = $vma->private_dirty;
+ $clean = $vma->private_clean;
+ $file  = $vma->file_name;
+ write;
+    }
+}
+
+
+sub printSharedMappings ()
+{
+    $TYPE = "SHARED MAPPINGS";
+    $^ = 'SECTION_HEADER';
+    $~ = 'SECTION_ITEM';
+    $- = 0;
+    $= = 100000000;
+
+    foreach  $vma (sort {-(($a->shared_clean + $a->shared_dirty)
+      <=>
+      ($b->shared_clean + $b->shared_dirty))}
+     sharedMappings ()) {
+
+ $size  = $vma->size;
+ $dirty = $vma->shared_dirty;
+ $clean = $vma->shared_clean;
+ $file  = $vma->file_name;
+ write;
+
+
+    }
+}
+
+
+format SECTION_HEADER =
+@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+$TYPE
+@>>>>>>>>>> @>>>>>>>>>>  @>>>>>>>>>   @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+"vmsize" "rss clean" "rss dirty" "file"
+.
+
+
+format SECTION_ITEM =
+@####### kb @####### kb @####### kb   @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+$size $clean $dirty $file
+.
+
+</code>
+</pre>
+
+
+<p>使用之前需要先安装Linux::Smaps模块:
+perl -MCPAN -e 'install Linux::Smaps'</p>
+
+<p>使用之:</p>
+
+<pre>
+<code>
+[root@211 tmp]# perl p.pl 6490
+VMSIZE:     835412 kb
+RSS:        274928 kb total
+              2880 kb shared
+              8112 kb private clean
+            263936 kb private dirty
+PRIVATE MAPPINGS
+     vmsize   rss clean   rss dirty   file
+  406380 kb     7432 kb   258816 kb   [heap]
+    6272 kb        0 kb     3612 kb
+    4048 kb       28 kb      364 kb   /terminus/crown/bin/ares
+     520 kb       56 kb      216 kb
+     604 kb      112 kb      176 kb
+     260 kb       20 kb      160 kb
+     240 kb       32 kb      128 kb   /usr/lib64/libpython2.6.so.1.0
+     260 kb       44 kb       92 kb
+     772 kb      236 kb       44 kb
+     224 kb        0 kb       44 kb   [stack]
+      56 kb        8 kb       40 kb
+      80 kb       20 kb       36 kb
+      72 kb       12 kb       24 kb   /terminus/crown/bin/ares
+     928 kb        0 kb       24 kb   /usr/lib64/libstdc++.so.6.0.13
+   10240 kb        0 kb       20 kb
+     132 kb        0 kb       16 kb
+      20 kb        0 kb       16 kb
+    1476 kb        0 kb       16 kb   /usr/lib64/libpython2.6.so.1.0
+   10240 kb        0 kb       12 kb
+   10240 kb        0 kb        8 kb
+      16 kb        0 kb        8 kb   /usr/lib64/python2.6/lib-dynload/datetime.so
+       8 kb        0 kb        8 kb   /usr/lib64/libstdc++.so.6.0.13
+       4 kb        0 kb        4 kb   /usr/lib64/python2.6/lib-dynload/syslog.so
+      16 kb       12 kb        4 kb   /lib64/libc-2.12.so
+       4 kb        0 kb        4 kb   /lib64/libc-2.12.so
+       4 kb        0 kb        4 kb   /lib64/libm-2.12.so
+       4 kb        0 kb        4 kb   /lib64/libm-2.12.so
+      28 kb       20 kb        4 kb   /usr/lib64/libstdc++.so.6.0.13
+      84 kb        8 kb        4 kb
+      92 kb        0 kb        4 kb   /lib64/libpthread-2.12.so
+       4 kb        0 kb        4 kb   /lib64/libpthread-2.12.so
+       4 kb        0 kb        4 kb   /lib64/libpthread-2.12.so
+      16 kb        0 kb        4 kb
+      12 kb        4 kb        4 kb   /usr/lib64/libcurl.so.4.1.1
+     128 kb        0 kb        4 kb   /lib64/ld-2.12.so
+       4 kb        0 kb        4 kb   /lib64/ld-2.12.so
+       4 kb        4 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_randommodule.so
+       8 kb        8 kb        0 kb   /usr/lib64/python2.6/lib-dynload/timemodule.so
+       4 kb        4 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_functoolsmodule.so
+       4 kb        4 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_json.so
+       4 kb        4 kb        0 kb   /lib64/librt-2.12.so
+      16 kb        8 kb        0 kb   /usr/local/boost149/lib/libboost_python.so.1.49.0
+       4 kb        4 kb        0 kb   /usr/local/boost149/lib/libboost_system.so.1.49.0
+       8 kb        4 kb        0 kb   /usr/local/boost149/lib/libboost_thread.so.1.49.0
+      16 kb       16 kb        0 kb   /usr/local/lib/libzmq.so.1.0.0
+      12 kb        4 kb        0 kb
+       4 kb        4 kb        0 kb   /lib64/ld-2.12.so
+       4 kb        4 kb        0 kb
+
+SHARED MAPPINGS
+     vmsize   rss clean   rss dirty   file
+    4048 kb      948 kb        0 kb   /terminus/crown/bin/ares
+    1476 kb      784 kb        0 kb   /usr/lib64/libpython2.6.so.1.0
+    1576 kb      448 kb        0 kb   /lib64/libc-2.12.so
+     324 kb      172 kb        0 kb   /usr/lib64/libcurl.so.4.1.1
+     928 kb      160 kb        0 kb   /usr/lib64/libstdc++.so.6.0.13
+     524 kb      104 kb        0 kb   /lib64/libm-2.12.so
+     192 kb       76 kb        0 kb   /usr/local/lib/libzmq.so.1.0.0
+      64 kb       32 kb        0 kb   /usr/lib64/python2.6/lib-dynload/datetime.so
+      72 kb       28 kb        0 kb   /terminus/crown/bin/ares
+      92 kb       28 kb        0 kb   /lib64/libpthread-2.12.so
+     312 kb       20 kb        0 kb   /usr/local/boost149/lib/libboost_python.so.1.49.0
+      12 kb       12 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_json.so
+      96 kb       12 kb        0 kb   /usr/local/boost149/lib/libboost_thread.so.1.49.0
+     128 kb       12 kb        0 kb   /lib64/ld-2.12.so
+       8 kb        8 kb        0 kb   /usr/lib64/python2.6/lib-dynload/syslog.so
+      12 kb        8 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_randommodule.so
+      12 kb        8 kb        0 kb   /usr/lib64/python2.6/lib-dynload/timemodule.so
+       8 kb        8 kb        0 kb   /usr/lib64/python2.6/lib-dynload/_functoolsmodule.so
+      28 kb        4 kb        0 kb   /lib64/librt-2.12.so
+       8 kb        4 kb        0 kb   /usr/local/boost149/lib/libboost_system.so.1.49.0
+       4 kb        4 kb        0 kb   [vdso]
+
+</pre>
+
+
+<p></code>
+从上面看到rss大小被分成了两个部分: private(私有)和shared(共享).
+private rss就是我们最关心的进程实际占用的内存数.</p>
+
+  </section>
+  
+  <div class="divider">
+    <span>
+    
+    <a href="/2013/04/18/tornado-code-source-structure.html"><i class="fa fa-chevron-left"></i></a>
+    
+    </span>
+    <!-- BEGIN comment icon
+    <span><a href="javascript:leave_comment();" id="leave_comment_link"><i class="fa fa-comment-o"></i></a></span>
+    <span><a href="javascript:collapse_comment();" id="collapse_comment_link" style="display:none;"><i class="fa fa-chevron-up"></i></a></span>
+      END comment icon -->
+
+    <span>
+    
+    <a href="/2013/04/26/nodejs-hubot-robot.html"><i class="fa fa-chevron-right"></i></a>
+    
+    </span>
+  </div>
+
+  <!-- BEGIN comment
+  <section class="comment">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'gopherwood';
+      var disqus_identifier = 'urn:uuid:4b73eb0a-ab1f-11e3-9567-040ccecf359c';
+
+      function leave_comment() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          $("#leave_comment_link").css("display", "none");
+          $("#collapse_comment_link").css("display", "");
+      };
+      function collapse_comment() {
+          // document.getElementById("disqus_thread").innerHTML = '';
+          $("#disqus_thread").slideUp(400, function() {
+              $("#disqus_thread").empty();
+              $("#leave_comment_link").css("display", "");
+              $("#collapse_comment_link").css("display", "none");
+              $("#disqus_thread").css("display", "");
+          });
+      };
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </section>
+  END comment -->
+  
+</article>
+
+        </div>
+        <footer>
+          <div>
+            
+            &copy; 2013 ~ 2014 liutaihua | powered by jekyll | thanks <a href="http://lhzhang.com" title="sext vi">sext vi</a> | fork <a href="https://github.com/liutaihua/liutaihua.github.io" title="fork me">me</a>
+          </div>
+        </footer>
+      </div> <!-- main -->
+  </body>
+</html>

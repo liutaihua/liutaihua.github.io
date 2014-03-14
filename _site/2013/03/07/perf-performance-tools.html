@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="liutaihua" />
+    
+    <title>perf  sched  收集和分析调度相关数据</title>
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link href="/atom.xml" rel="alternate" title="yeah, the stuff" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/github.css">
+    <link rel="stylesheet" href="/media/css/fontawesome.css">
+    <script src="/media/js/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script> 
+    <script type="text/javascript" src="/media/js/highlight.pack.js"></script>
+    <script type="text/javascript">
+      hljs.initHighlightingOnLoad();
+    </script>
+  </head>
+  <body>
+      <div id="main" role="main">
+        <header>
+          <div id="header">
+            <h1><a title="yeah, the stuff" class="" href="/">yeah, the stuff</a></h1>
+          </div>
+          <nav>
+            
+            <span><a title="Archive" href="/archive.html"><i class="fa fa-list-ul"></i></a></span>
+            
+            <span><a title="Tags" href="/tags.html"><i class="fa fa-tags"></i></a></span>
+            
+            <span><a title="About" href="/about.html"><i class="fa fa-user"></i></a></span>
+            
+            <span><a title="Gallery" href="http://www.flickr.com/photos/liutaihua/"><i class="fa fa-film"></i></a></span>
+            
+            <span><a title="Blogroll" href="/links.html"><i class="fa fa-link"></i></a></span>
+            
+            <span><a title="Subscribe" href="/atom.xml"><i class="fa fa-rss"></i></a></span>
+            
+          </nav>
+        </header>
+        <div id="content">
+        <article>
+  <section class="title">
+    <h2>perf  sched  收集和分析调度相关数据 </h2>
+  </section>
+  <section class="meta">
+  <span class="time">
+    <time datetime="2013-03-07">2013-03-07</time>
+  </span>
+  
+  <span class="tags">
+    
+    <a href="/tags.html#move from old blog" title="move from old blog">#move from old blog</a>
+    
+    <a href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/2013-03-07-perf  sched  收集和分析调度相关数据.markdown'>编辑</a>
+  </span>
+  <!-- BEGIN this would not work on any other domain -->
+  <span id="like-wrapper"></span>
+  <script type="text/javascript">
+    var like_shortname      = 'gopherwood';
+    var like_identifier     = 'urn:uuid:4b73533d-ab1f-11e3-8e96-040ccecf359c';
+    var like_like_btn       = '&#xf087;';
+    var like_unlike_btn     = '&#xf087;';
+    var like_disable_unlike = true;
+
+    var l = document.createElement('script'); l.type = 'text/javascript'; l.async = true;
+    l.src = 'https://like-waynezhang.rhcloud.com/javascript/widget.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(l);
+  </script>
+  <!-- END this would not work on any other domain -->
+  
+  </section>
+  <section class="post">
+  <p>1,通常用到 perf sched  record  收集系统相关的调度数据, 然后使用pert ached   latency  --sort max 来打印出收集到的信息,perf sched  latency  --sort  max 展现的数据中各个column的含义如下:</p>
+
+<ul>
+<li>Task: 进程的名字和 pid</li>
+<li>Runtime: 实际运行时间</li>
+<li>Switches: 进程切换的次数</li>
+<li>Average delay: 平均的调度延迟</li>
+<li>Maximum delay: 最大延迟</li>
+</ul>
+
+
+<p>其中最值得关注的是Maxinum delay的数据</p>
+
+<p>2, perf sched reply ,  它试图重放pert.data文件中锁记录的调度场景, pert.data文件是由上面的pert ached record等收集命令产生,  如果是使用pert  record产生的pert.data文件, 那么使用pert  ached reply并无法分析出有用的数据.
+下面是一次per  ached reply的结果:</p>
+
+<pre>\#perf sched reply 
+run measurement overhead: 173 nsecs
+sleep measurement overhead: 53289 nsecs
+the run test took 999980 nsecs
+the sleep test took 1123326 nsecs
+nr_run_events:        33692
+nr_sleep_events:      33910
+nr_wakeup_events:     16719
+target-less wakeups:  40
+multi-target wakeups: 30
+task      0 (             swapper:         0), nr_events: 38449
+task      1 (            qemu-kvm:     21706), nr_events: 479
+task      2 (            qemu-kvm:     21705), nr_events: 416
+task      3 (            qemu-kvm:     17648), nr_events: 2464
+task      4 (            qemu-kvm:     17640), nr_events: 2268
+task      5 (         ksoftirqd/0:         4), nr_events: 70
+task      6 (            qemu-kvm:     17645), nr_events: 2255
+task      7 (            qemu-kvm:     17646), nr_events: 2050
+task      8 (            qemu-kvm:     18320), nr_events: 1143
+task      9 (            qemu-kvm:     18318), nr_events: 1420
+task     10 (            qemu-kvm:     17647), nr_events: 2092
+</pre>
+
+
+<p>其中task 0   swapper占了很大比例的event,  说明我的系统中在进行较大的交换分区使用.</p>
+
+  </section>
+  
+  <div class="divider">
+    <span>
+    
+    <a href="/2013/03/07/mount-kvm-img.html"><i class="fa fa-chevron-left"></i></a>
+    
+    </span>
+    <!-- BEGIN comment icon
+    <span><a href="javascript:leave_comment();" id="leave_comment_link"><i class="fa fa-comment-o"></i></a></span>
+    <span><a href="javascript:collapse_comment();" id="collapse_comment_link" style="display:none;"><i class="fa fa-chevron-up"></i></a></span>
+      END comment icon -->
+
+    <span>
+    
+    <a href="/2013/03/11/epiceditor-markdown-online_editor.html"><i class="fa fa-chevron-right"></i></a>
+    
+    </span>
+  </div>
+
+  <!-- BEGIN comment
+  <section class="comment">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'gopherwood';
+      var disqus_identifier = 'urn:uuid:4b73533d-ab1f-11e3-8e96-040ccecf359c';
+
+      function leave_comment() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          $("#leave_comment_link").css("display", "none");
+          $("#collapse_comment_link").css("display", "");
+      };
+      function collapse_comment() {
+          // document.getElementById("disqus_thread").innerHTML = '';
+          $("#disqus_thread").slideUp(400, function() {
+              $("#disqus_thread").empty();
+              $("#leave_comment_link").css("display", "");
+              $("#collapse_comment_link").css("display", "none");
+              $("#disqus_thread").css("display", "");
+          });
+      };
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </section>
+  END comment -->
+  
+</article>
+
+        </div>
+        <footer>
+          <div>
+            
+            &copy; 2013 ~ 2014 liutaihua | powered by jekyll | thanks <a href="http://lhzhang.com" title="sext vi">sext vi</a> | fork <a href="https://github.com/liutaihua/liutaihua.github.io" title="fork me">me</a>
+          </div>
+        </footer>
+      </div> <!-- main -->
+  </body>
+</html>
