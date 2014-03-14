@@ -11,22 +11,24 @@ tags:
 
 <img src="http://farm4.staticflickr.com/3779/13106561643_5590c06280_c_d.jpg">I just want a drink</img>  
 
-c++通过swig暴露自己的API提供给python调用,  在我们的例子中生成的swig文件是data/cnscript/gamelogic.py, 比如player的SetAttr, GetAttr等接口, 在这里均暴露出, 已提供给python脚本使用.
+c++通过swig暴露自己的API提供给python调用,  在我们的例子中生成的swig文件是
+    data/cnscript/gamelogic.py
+比如player的SetAttr, GetAttr等接口, 在这里均暴露出, 已提供给python脚本使用.
 
 同时在c++里还有使用Python.h开发, 使用PyObject来调用python的方法, 比如游戏rule里的on_player_entered_map等方法, 在c++里某些逻辑触发时, 会调用这些py方法.
 
 c++里构建一个观察器Observers, 估计是负责监视事件的发生. 当事件发生时(这个不确定, Observers还是EventDispatcher类负责事件), 比如:  
-PyObserver::OnObjectAddedToWorldPostNotify  则会调用某些触发函数,  
+    PyObserver::OnObjectAddedToWorldPostNotify  则会调用某些触发函数,  
 但是函数逻辑是写在python脚本里的, 所以在这里触发时, 通过PyObject Call. 当然实际源码里这中间经过一个ScriptManager的类进行的, 但最后都是在使用:  
-<code>
-PyObject *pFunc = _GetPythonFunc(name);
-return _CallPythonObj(pFunc, pTupleArgs);
-</code>
+    <code>
+    PyObject *pFunc = _GetPythonFunc(name);
+    return _CallPythonObj(pFunc, pTupleArgs);
+    </code>
 至此c++和py之间的互调逻辑完成.
 
 游戏场景的World:
-Configuration/EnvHolder.cpp   源码里有一个BuildWorldNew的类, 在某个场景进程启动时, 初始化GameWorld时, 会初始化调用  BuildWorldNew,而BuildWorldNew里通过  
-ScriptManager::Instance() -> CallNoRT调用data/cnscript/rule/utils.py里的dress_world_up,  
+    Configuration/EnvHolder.cpp   源码里有一个BuildWorldNew的类, 在某个场景进程启动时, 初始化GameWorld时, 会初始化调用  BuildWorldNew,而BuildWorldNew里通过  
+    ScriptManager::Instance() -> CallNoRT调用data/cnscript/rule/utils.py里的dress_world_up,  
 dress_world_up里会根据启动进程的参数, 为场景加入指定的Ruler类, 比如SingleJJC类.
 
 进程在启动时, GameWorld进行一系列初始化, 包括注册新的事件调度器EventDispatcher,SkillManager,HttpProxy, CreatureObserver， 以及加载WorldObject对象.
@@ -36,7 +38,10 @@ WorldObject类都是关于场景里物品对象, 碰撞检测, 初始化物品�
 
 Creature生物类, 是包括Player类, Monster类的父类.
 
-EventDispatcher事件调度器, 包含一个EventReceiver事件接收者, Create方法接收一个callback作为回调创建一个事件, Register方法接收一个receiver作为参数, 把事件接受者加入接受者列表, EventDispatcher也有一个Update方法, 会遍历所有事件, 如果delay时间对了, 则根据receiver回调给于的callback.
+EventDispatcher事件调度器
+    包含一个EventReceiver事件接收者, Create方法接收一个callback作为回调创建一个事件
+    Register方法接收一个receiver作为参数, 把事件接受者加入接受者列表, 
+    EventDispatcher也有一个Update方法, 会遍历所有事件, 如果delay时间对了, 则根据receiver回调给于的callback.
 
 GameHolder是游戏外层主循环类, 一个while True进入循环, 每秒20个frame的方式, 对GameHoler自身, GameWorld, WorldObject对象, 进行Update调用, 以更新数据, 触发事件等.  
 
