@@ -9,7 +9,8 @@ tags:
 ---
 
 
-<img src="http://farm4.staticflickr.com/3779/13106561643_5590c06280_c_d.jpg">I just want a drink</img>
+<img src="http://farm4.staticflickr.com/3779/13106561643_5590c06280_c_d.jpg">I just want a drink</img>  
+
 c++通过swig暴露自己的API提供给python调用,  在我们的例子中生成的swig文件是data/cnscript/gamelogic.py, 比如player的SetAttr, GetAttr等接口, 在这里均暴露出, 已提供给python脚本使用.
 
 同时在c++里还有使用Python.h开发, 使用PyObject来调用python的方法, 比如游戏rule里的on_player_entered_map等方法, 在c++里某些逻辑触发时, 会调用这些py方法.
