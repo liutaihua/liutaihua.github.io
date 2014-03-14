@@ -5,11 +5,11 @@ layout: page
 
 a
 
-> Minimalist | Appleist | Unixer | Coder
+> Appleist | Linuxer| Coder | Photographers
 
 who involved in 
 
-> [github](https://github.com/waynezhang)
+> [github](https://github.com/liutaihua)
 
 mail 
 
@@ -17,6 +17,6 @@ mail
 
 or follow 
 
-> [@o_lll](https://twitter.com/#!/o_lll)
+> [@o_lll](https://twitter.com/defage)
 
 to reach me
