@@ -17,6 +17,6 @@ mail
 
 or follow 
 
-> [微薄](http://weibo.com/defage/)
+> [新浪微博](http://weibo.com/defage/)
 
 to reach me
