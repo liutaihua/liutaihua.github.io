@@ -10,6 +10,9 @@ layout: default
   <span class="time">
     <time datetime="{{ page.date | date:"%Y-%m-%d" }}">{{ page.date | date:"%Y-%m-%d" }}</time>
   </span>
+  <span class="time">
+    <p href='https://github.com/liutaihua/liutaihua.github.io/blob/master/_posts/{{ page.date}}/{{ page.title }}'>编辑</p>
+  </span>
   {% if page.tags %}
   <span class="tags">
     {% for tag in page.tags %}
