@@ -25,7 +25,7 @@ layout: default
     <script type="text/javascript">
       var like_shortname      = '{{ site.disqus }}';
       var like_identifier     = '{{ post.guid }}';
-      var like_name           = '{{ page.title }}';
+      var like_name           = '{{ post.title }}';
       var like_like_btn       = '&#xf087;';
       var like_unlike_btn     = '&#xf087;';
       var like_disable_unlike = true;
