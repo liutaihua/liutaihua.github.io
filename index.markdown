@@ -31,7 +31,7 @@ layout: default
       var like_disable_unlike = true;
 
       var l = document.createElement('script'); l.type = 'text/javascript'; l.async = true;
-      l.src = 'https://like-waynezhang.rhcloud.com/javascript/widget.js';
+      l.src = '/media/js/widget.js';
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(l);
     </script>
     <!-- END this would not work on any other domain -->
