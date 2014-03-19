@@ -13,7 +13,7 @@ who involved in
 
 mail 
 
-> echo qrsntrotznvyopbz| tr n-za-moo a-z@.
+> echo qrsntr@tznvy.pbz | tr A-Za-z N-ZA-Mn-za-m 
 
 or follow 
 
