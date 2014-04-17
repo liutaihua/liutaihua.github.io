@@ -30,8 +30,9 @@ ioloop它有一个基类: Configurable定义在util.py文件内，这个Configur
         # here too.
         instance.initialize(**args)
         return instance
-这段代码会在Configurable或它的子类也就是IOLoop在实例化的时候, 被执行, 它获取当前实例:impl, 将这个impl连同在实例化时传给__init__的参数, 一起作为参数args传给实例的initialize方法来做IOLoop的初始化.  
-这个过程里重要的2个方法是, configurable_base和 configured_class, 还有configurable_default,
+这段代码会在Configurable或它的子类也就是IOLoop在实例化的时候, 被执行, 它获取当前实例:impl,  
+将这个impl连同在实例化时传给__init__的参数, 一起作为参数args传给实例的initialize方法来做IOLoop的初始化.  
+这个过程里重要的2个方法是, configurable_base和 configured_class, 还有configurable_default,  
 ioloop重写了父类的 configurable_base方法, 它直接返回IOLoop类自己本身:
     @classmethod
     def configurable_base(cls):
@@ -44,7 +45,8 @@ ioloop重写了父类的 configurable_base方法, 它直接返回IOLoop类自己
         if cls.__impl_class is None:
             base.__impl_class = cls.configurable_default()
         return base.__impl_class
-这里会判断静态变量__impl_class是否已被赋值, 如果None, 则执行configurable_default方法, 获得最终需要的对象实例, 绕了这么久这里才是关键, 因为这个configurable_default方法里,
+这里会判断静态变量__impl_class是否已被赋值, 如果None, 则执行configurable_default方法,  
+获得最终需要的对象实例, 绕了这么久这里才是关键, 因为这个configurable_default方法里,  
 根据平台不同,会选择epoll, kqueue, select 其中的1个作为事件触发.
     @classmethod
     def configurable_default(cls):
@@ -64,8 +66,9 @@ ioloop重写了父类的 configurable_base方法, 它直接返回IOLoop类自己
         def initialize(self, **kwargs):
             super(EPollIOLoop, self).initialize(impl=select.epoll(), **kwargs)
 这里可以看出, EPollIOLoop继承于PollIOLoop,  PollIOLoop是IOLoop的子类, 源码就是ioloop.py里,  
-可以看到IOLoop类本身基本只是根据不同的平台, 最终在访问IOLoop.instance变量的时候, 返回不同平台下的不同的IOLoop子类, 比如linux下IOLoop.instance其实就是PollIOLoop的epool实例,
-PollIOLoop类的初始化函数initialize需要一个impl参数, 而这个参数就是子类EPollIOLoop传进来的select.epoll()实例:
+可以看到IOLoop类本身基本只是根据不同的平台, 最终在访问IOLoop.instance变量的时候,  
+返回不同平台下的不同的IOLoop子类, 比如linux下IOLoop.instance其实就是PollIOLoop的epool实例,  
+PollIOLoop类的初始化函数initialize需要一个impl参数, 而这个参数就是子类EPollIOLoop传进来的select.epoll()实例:  
     super(EPollIOLoop, self).initialize(impl=select.epoll(), **kwargs)
 到此就完成了IOLoop的平台选择....
 
