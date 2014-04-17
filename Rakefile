@@ -41,6 +41,7 @@ end
 def new_post(title)
   time = Time.now
   filename = "_posts/" + time.strftime("%Y-%m-%d-") + title + '.markdown'
+  title.gsub! '-', ' '
   if File.exists? filename then
     puts "Post already exists: #{filename}"
     return
