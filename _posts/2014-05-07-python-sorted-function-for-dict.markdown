@@ -8,20 +8,25 @@ tags:
 ---
 
 
-PY有自己内建的工厂函数sorted用来排序, 它返回一个原地排序后的副本. 采用的是原地排序算法. 这个工厂函数的原型是:
-sort(lmp=None, key=None, reverse=None)  
-在使用sorted的时候, 都是可以根据自己需要指定一个函数给key作为针对数据里具体哪个位置做排序的  
+PY有自己内建的工厂函数sorted用来排序, 它返回一个原地排序后的副本. 采用的是原地排序算法. 这个工厂函数的原型是:    
+
+<pre><code>sort(lmp=None, key=None, reverse=None)  </code></pre>  
+
+在使用sorted的时候, 都是可以根据自己需要指定一个函数给key作为针对数据里具体哪个位置做排序的,  
+
 比如最简单的对字典d={'a': {'s': 1}, 'b': {'s': 2}}的's'字段排序:  
-    sorted(d.items(), key=lambda x:x[1]['s'])
 
 
+  <pre><code>  sorted(d.items(), key=lambda x:x[1]['s'])</code></pre>  
+  
 key是一个匿名函数, 匿名函数会逐个接受d.items()后产生的列表里的项作为参数, key的函数的返回就是排序的关键字, sorted工厂函数会在等待所有项返回后, 针对这些项对字典d进行排序.   
 
 这里使用的都是针对单个关键字做排序,  实际遇到很多需要对一个字典数据里的多个关键字进行排序.  
 比如一个字典里包含了每个学生的 本次成绩, 学号, 上次考试成绩, 需要针对这3个关键字做排序, 优先顺序是: 优先排本次成绩, 然后是上次成绩, 再然后就学号.  
 当对多个关键字做排序的时候, 一样还需要支持是否reverse, 那么这次给key函数就相对稍微复杂点了:  
 
-<code>
+
+<pre><code>
 def sortkeypicker(keynames):
     reverse_tuple = set()
     for i, k in enumerate(keynames):
@@ -38,11 +43,13 @@ def sortkeypicker(keynames):
     return getit
 
 d = {'Mike': {'SN': 100, 'current_score': 88, 'last_score': 80}, 'Pod': {'SN': 101, 'current_score': 90, 'last_score': 89}, 'Lisa': {'SN': 33, 'current_score': 79, 'last_score': 93}}
+
 sorted(d.iteritems(), key=sortkeypicker(['-current_score', '-last_score', 'SN']))
-</code>
+</code></pre>
 
 上面的代码中, sortkeypicker函数作为key函数, 它接受一个列表, 这个列表包含要针对哪几个关键词做排序的关键字列表, 在列表越靠近左边的越优先;  
-首先处理一下是否需要reverse反序排序的关键字(依据是给定的关键词前的负号"-"), 然后它会返回一个闭包函数,  这个闭包函数getit, 它接受的函数就是在d.iteritems()时产生的列表里的元素, 这些元素将逐个被getit函数处理, 返回没一个经过处理元素的结果 composite,  
+首先处理一下是否需要reverse反序排序的关键字(依据是给定的关键词前的负号"-"), 然后它会返回一个闭包函数,  这个闭包函数getit, 它接受的函数就是在d.iteritems()时产生的列表里的元素,  
+这些元素将逐个被getit函数处理, 返回没一个经过处理元素的结果 composite,  
 composite其实是一个列表, 列表里包含的就是 keynames关键字列表里这些关键字所对应的字典d里面的value, 当然这些value会在经过之前是否需要reverse_tuple里的关键字做反序处理,  
 这里的操作并不会改变字典d里本身的value大小, 所以才有负数的情况, 负数是为了reverse.
   
