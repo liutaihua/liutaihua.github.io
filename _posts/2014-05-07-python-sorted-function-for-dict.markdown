@@ -22,23 +22,23 @@ key是一个匿名函数, 匿名函数会逐个接受d.items()后产生的列表
 当对多个关键字做排序的时候, 一样还需要支持是否reverse, 那么这次给key函数就相对稍微复杂点了:  
 
 <code>
-    def sortkeypicker(keynames):
-        reverse_tuple = set()
-        for i, k in enumerate(keynames):
-            if k[:1] == '-':
-                keynames[i] = k[1:]
-                reverse_tuple.add(k[1:])
-        def getit(adict):
-            adict = adict[1]
-            composite = [adict[k] for k in keynames]
-            for i, (k, v) in enumerate(zip(keynames, composite)):
-                if k in reverse_tuple: #出现在reverse_tuple里的key是需要做reverse的, 这里直接把它负数化.
-                    composite[i] = -int(v)
-            return composite
-        return getit
+def sortkeypicker(keynames):
+    reverse_tuple = set()
+    for i, k in enumerate(keynames):
+        if k[:1] == '-':
+            keynames[i] = k[1:]
+            reverse_tuple.add(k[1:])
+    def getit(adict):
+        adict = adict[1]
+        composite = [adict[k] for k in keynames]
+        for i, (k, v) in enumerate(zip(keynames, composite)):
+            if k in reverse_tuple: #出现在reverse_tuple里的key是需要做reverse的, 这里直接把它负数化.
+                composite[i] = -int(v)
+        return composite
+    return getit
 
-    d = {'Mike': {'SN': 100, 'current_score': 88, 'last_score': 80}, 'Pod': {'SN': 101, 'current_score': 90, 'last_score': 89}, 'Lisa': {'SN': 33, 'current_score': 79, 'last_score': 93}}
-    sorted(d.iteritems(), key=sortkeypicker(['-current_score', '-last_score', 'SN']))
+d = {'Mike': {'SN': 100, 'current_score': 88, 'last_score': 80}, 'Pod': {'SN': 101, 'current_score': 90, 'last_score': 89}, 'Lisa': {'SN': 33, 'current_score': 79, 'last_score': 93}}
+sorted(d.iteritems(), key=sortkeypicker(['-current_score', '-last_score', 'SN']))
 </code>
 
 上面的代码中, sortkeypicker函数作为key函数, 它接受一个列表, 这个列表包含要针对哪几个关键词做排序的关键字列表, 在列表越靠近左边的越优先;  
