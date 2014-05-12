@@ -10,7 +10,7 @@ tags:
 
 PY有自己内建的工厂函数sorted用来排序, 它返回一个原地排序后的副本. 采用的是原地排序算法. 这个工厂函数的原型是:    
 
-<pre><code>sort(lmp=None, key=None, reverse=None)  </code></pre>  
+<pre><code>sort(cmp=None, key=None, reverse=None)  </code></pre>  
 
 在使用sorted的时候, 都是可以根据自己需要指定一个函数给key作为针对数据里具体哪个位置做排序的,  
 
@@ -21,7 +21,18 @@ PY有自己内建的工厂函数sorted用来排序, 它返回一个原地排序�
   
 key是一个匿名函数, 匿名函数会逐个接受d.items()后产生的列表里的项作为参数, key的函数的返回就是排序的关键字, sorted工厂函数会在等待所有项返回后, 针对这些项对字典d进行排序.   
 
-这里使用的都是针对单个关键字做排序,  实际遇到很多需要对一个字典数据里的多个关键字进行排序.  
+这里使用的都是针对单个关键字做排序,  实际遇到很多需要对一个字典数据里的多个关键字进行排序.    
+
+有比较优雅的写法是:  
+<pre><code>
+def sort_dict_by_key_list(d, key_list, reverse=False):
+    def ccmp(data_x, data_y):
+        for key in key_list:
+            return cmp(data_x[key], data_y[key])
+    return sorted(d.iteritems(), key=lambda x:x[1], cmp=ccmp, reverse=reverse)
+</code></pre>
+上面代码中,写了一个自己的cmp把原生cmp套在里面做返回， 加入多个关键字排序的需求进去， 但是这个似乎没有做到的需求是： 多个关键字排序， 这些关键字中有的需要反序， 有的则需要正序， 因为上面的reverse是全局性的， 要么全部正序, 要么全部反序.  
+
 比如一个字典里包含了每个学生的 本次成绩, 学号, 上次考试成绩, 需要针对这3个关键字做排序, 优先顺序是: 优先排本次成绩, 然后是上次成绩, 再然后就学号.  
 当对多个关键字做排序的时候, 一样还需要支持是否reverse, 那么这次给key函数就相对稍微复杂点了:  
 
