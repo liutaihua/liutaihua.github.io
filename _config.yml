@@ -3,6 +3,7 @@ pygments: true
 permalink: /:year/:month/:day/:title.html
 name: "yeah, the stuff"
 markdown: rdiscount
+production_url: http://liutaihua.github.io
 
 author: "liutaihua"
 atom-baseurl: "http://liutaihua.github.io"
