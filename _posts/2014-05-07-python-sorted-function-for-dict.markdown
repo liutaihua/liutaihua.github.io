@@ -2,6 +2,7 @@
 title: python sorted function for dict
 layout: post
 guid: urn:uuid:3caa3bc2-a07f-4972-9b93-0612d5c43467
+description: "在用Github Pages + Jekyll搭建博客的过程中，学到了不少SEO（Search Engine Optimization）的知识，比如如何让博客被搜索引擎收录，需要注意哪些以提高排名等等。于是，便有了下面几条简单的总结。"
 tags:
   - python
   - 排序
