@@ -13,11 +13,9 @@ tags:
 上代码:
 <pre><code>
 package main
-
 import (
 	"fmt"
 )
-
 
 func xrange() chan int {
   var ch chan int = make(chan int)
@@ -85,9 +83,10 @@ filter2再次读取一次  <-in  这里的in呢是第一次调用filter时的参
 7. 7, main中带着number=5的情况, 进入下一个循环,  开启filter5,  而filter5又类似会和filter3返回的out这个信道建立一个串行信道, 我们一样给个虚拟的名字叫做:  filter3_pipe_filter5,  filter5开始 #2 位置 <-in的读取, 被阻塞, 协程回filter3, 3在#2的位置一样会被阻塞, 回filter2,  2的 #2 位置阻塞回 xrange中的#1, xrange产生下一个数字6,  由于6在filter2中被筛选了, 会再次让xrange产生数字7,  7在filter2中胜出, 写入filter2_pipe_filter3, 在filter3中被读到, 再一次在filter3中胜出, 写入filter3_pipe_filter5, 被filter5读到, 最终胜出,  协程返回给main,  main开始带着number=7,  生成filter7,  后续一直循环这个过程...  
 
 
-8. 8, end: 最终会生成很多这种 filter(N-1)_pipe_filterN 的串行于2个goroutine之间的桥梁似的信道, X和Y彼此阻塞等待彼此的写入和读取,
+8. 8, end: 最终会生成很多这种 filter(N-1)__pipe_filterN 的串行于2个goroutine之间的桥梁似的信道, X和Y彼此阻塞等待彼此的写入和读取,
 filter(N-1)_pipe_filterN  中filterN因为只要一读取就会被阻塞在 #2 位置, 唤醒filter(N-1), filter(N-1)一样在读, 依次 N-2, N-3, N-4 ... 直到xrange产生下一个整数,  这个整数就像一片叶子, 流经这些filter, 被filter拿着它依次除以小于自己的其他数,  只要它在其中任意一个filter点被过滤掉,  那么阻塞会让协程再次进入xrange做再下一次的整数生产...  
 
+Golang的 goroutine和channel真的算是语言变革了,  虽然类似channel信道这种方式在很多其他语言中有类似实现的库,  但Golang把它直接整合进语言本身的特性, 而且更加简洁.  
 
 整个过程就像一个链表,  链表中单个node的数据结构类似于:  
 
