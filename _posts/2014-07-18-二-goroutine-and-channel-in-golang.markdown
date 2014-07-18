@@ -71,9 +71,33 @@ func main() {
 3. 3, 调用filter方法, 此时number=2;  filter2产生一个goroutine, 由于filter方法的第一个参数就是nums这个信道, 那么在filter2的goroutine里代码执行到  #2位置时, 阻塞, 等待xrange中生产下一个整数:3, 经过计算后, 整数3胜出了, 此时应当是 #5位置的信道读取阻塞, 然后会切换到 #3 等待刚刚胜出的整数3被send进out这个信道;  filter2进入随后继续的循环中, 暂且放下这里的逻辑;   
 
 
-4. 4, 当out信道有元素了, #5 位置的读取成功了,  number变量被赋值为3;  3这个素数被找出来了;  同时nums变量所代表的ch这个信道channel,  被filter2中的out信道所重赋值.   
+4. 4, 当out信道有元素了, #5 位置的读取成功了,  number变量被赋值为3;  3这个素数被找出来了;  同时nums变量所代表的ch这个信道channel,  被filter2中的out信道所重赋值.   为了清晰的分清nums这个chan和filter 返回的chan, 可以将main部分代码改下为:  
+<pre><code>
+func main() {
+	nums := xrange()
+	number := <-nums
+	is_first_loop := true
+	var out chan int
+	for number <= 20 {
+		fmt.Println(number)
+		if is_first_loop {
+		    out = filter(nums, number)
+		} else {
+		    out = filter(out, number)
+		}
+	        is_first_loop = false
+		number = <-out
+	}
+	
+}
+</code></pre>  
 
-5. 5, main方法中进入下一个循环,  带着number=3的情况再次调用filter,   产生了一个新的goroutine: filter3,  注意,此时的nums注意,nums已经是filter2中的out了, 有此filter3和filter2被一个信道串起来了, 这个信道究竟是哪个呢, 就是filter2返回的变量out,  由于filter2,  filter3这2个goroutine中涉及到同一个channel信道, 因此对于这个信道的操作会讲filter2, filter3变成串行逻辑;  这里给filter2和filter3之间串起来的信道虚拟一个命名叫做 filter2_pipe_filter3吧;  
+
+5. 5, main方法中进入下一个循环,  带着number=3的情况再次调用filter,   产生了一个新的goroutine: filter3,  注意,此时的nums注意,nums已经是filter2中的out了, 有此filter3和filter2被一个信道串起来了, 这个信道究竟是哪个呢, 就是filter2返回的变量out,  由于filter2,  filter3这2个goroutine中涉及到同一个channel信道, 因此对于这个信道的操作会讲filter2, filter3变成串行逻辑;  这里给filter2和filter3之间串起来的信道虚拟一个命名叫做 filter2_pipe_filter3吧;    
+
+(从上面改写后的mian代码中,  更好区别这一点了,  xrange中的chan只和filter2的 #2 位置的读取串行一个信道,  而其他的filter goroutine都是用 filterN中的out 这个chan 串行 filter(N+1)也就是filterN的下一个filter, 的 #2 位置串行一个信道, 依次链接成一个类似链表一样的串行. )
+
+
 
 
 6. 6, 接下来协程应该被执行到了filter3的 #2 位置,  照样进行chan的读取会阻塞, 由于filter2, filter3用同一个信道了, 因此协程跳转到filter2中等待 #3 位置的send,  逻辑重回filter2,  继续开始了之前filter2中未完的循环,  
@@ -98,5 +122,5 @@ type  node struct {
 }
 </code></pre>  
 
-这些node的left和它的上一个节点的right搭在一起形成一个golang的信道, 准确的说上golang的串行信道.  
+这些node的left和它的上一个节点的right搭在一起形成一个golang的信道, 准确的说是golang的串行信道.  
 DONE
