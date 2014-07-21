@@ -70,3 +70,11 @@ func pushToPool(conn *sql.DB) {
 但是如上面所说, 这并不是根本问题,  因为错误的讲db的实例化写在go func {....}()里了, 用什么方式其实都会导致数据库连接过多问题, 很傻逼的做法, 发现后迅速改掉, 连接数已经回正常控制水平了, 用自己写的db pool或者不用都一样,  因为使用golang自带的database/sql模块,  sql.Open('mysql', xxxx)来启动go-sql-driver/mysql时,  sql模块本身已经为玩家们封装了db pool, 因此只需要进行db.SetMaxIdleConns(100) 设置最大连接即可..  
 
 自己写一个db pool也是为了使用看看channel数据类型串行多个goroutine的方式. 
+用到的库有:  
+database/sql  
+github.com/go-sql-driver/mysql  
+github.com/likexian/simplejson  
+strconv  
+encoding/json  
+strings
+
