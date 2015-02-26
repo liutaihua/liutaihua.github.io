@@ -1,5 +1,5 @@
 ---
-title: 一则内存泄露
+title: a-memory-leak-event
 layout: post
 guid: urn:uuid:4b1a6a5e-38e3-4e62-b5b1-fb70786d6061
 description: a memory leak with python
