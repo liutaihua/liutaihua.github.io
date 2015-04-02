@@ -129,4 +129,5 @@ public:
 
     uint32 KillerId;
 };
-这个示例代码在  https://github.com/liutaihua/gameStateMachine.git ， 在MAC OS 10.10, clang 6.0 xcode6.0下可直接编译通过， 里面包含一些简单的状态改变。按每秒20帧做循环
+</code></pre>
+整个示例的代码在  https://github.com/liutaihua/gameStateMachine.git ， 在MAC OS 10.10, clang 6.0 xcode6.0下可直接编译通过， 里面包含一些简单的状态改变。按每秒20帧做循环
