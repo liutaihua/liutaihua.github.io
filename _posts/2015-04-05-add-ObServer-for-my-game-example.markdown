@@ -19,7 +19,7 @@ public:
     CreatureObserver();
     ~CreatureObserver(){}
     void Observe(Creature *obj);
-    fd::delegate<void(Creature*)> SigCreatureMoved;
+    fd::delegate\<void(Creature*)\> SigCreatureMoved;
 private:
     void ObserveCreature(Creature* pCreature);
 
