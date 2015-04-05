@@ -19,13 +19,15 @@ public:
     CreatureObserver();
     ~CreatureObserver(){}
     void Observe(Creature *obj);
-    fd::delegate\<void(Creature*)\> SigCreatureMoved;
+    fd::delegate<void(Creature*)> SigCreatureMoved; 
 private:
     void ObserveCreature(Creature* pCreature);
 
     void OnCreatureMove(Creature* pCreature);
 };
 </code></pre>
+
+
 这个简化版的observer， 包含2个方法，被观察者注册上来的实现， 大体是这样：
 <pre><code>
 Creature::Creature(enum ObjectType objType) :  //生物基类的构造函数
@@ -54,5 +56,16 @@ void CreatureObserver::OnCreatureMove(Creature* pCreature)
     SigCreatureMoved(pCreature);
 }
 </code></pre>
+
+<pre><code>
+class Creature
+{
+    public:
+        // ... 省略部分
+        fd::delegate<\void()> SigMoved;
+        // ... 省略部分
+</code></pre>
+
+
 
 整个过程还不是很丰满，我会把PetAI是如果根据Pet obj和Player Obj的状态变化，来实现自己的基本AI逻辑一起讲清楚。暂时先到这里了。
