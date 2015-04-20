@@ -18,12 +18,10 @@ class FastQueue
 		T element;
 		node * next;
 	};
-
 	node * last;
 	node * first;
 	LOCK m_lock;
 public:
-
 	FastQueue()
 	{
 		last = 0;
@@ -48,7 +46,6 @@ public:
 			last->next = n;
 		else
 			first = n;  
-
 		last = n;       
 		n->next = 0;
 		n->element = elem;
@@ -69,12 +66,10 @@ public:
 		first = td->next;         // 队列首个节点，转换为Pop后节点的next指向节点
 		if(!first)
 			last = 0;         // 队列空了
-
 		delete td;
 		m_lock.Release();
 		return ret;
 	}
-
 	T front()   
 	{
 		m_lock.Acquire();
@@ -83,7 +78,6 @@ public:
 			m_lock.Release();
 			return reinterpret_cast<T>(0);
 		}
-
 		T ret = first->element;
 		m_lock.Release();
 		return ret;
@@ -97,7 +91,6 @@ public:
 			m_lock.Release();
 			return;
 		}
-
 		node * td = first;
 		first = td->next;
 		if(!first)
@@ -119,19 +112,15 @@ public:
 
 一个线程安全的Mutex锁：  
 <pre></code>
+#include <pthread.h>
 class  Mutex
 {
 public:
-
 	Mutex();
-
 	~Mutex();
-
-
     inline void Acquire()   // 获取锁， 这是一个同步阻塞操作
 	{
 		pthread_mutex_lock(&mutex);
-
 	}
 
 
