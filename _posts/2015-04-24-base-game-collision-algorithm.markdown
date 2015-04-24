@@ -27,7 +27,7 @@ Line line = {p1, p2}
 
 //计算点到线段的距离
 //点到线段的最短距离，有时候是点到线段的垂直距离， 有时候却是点到线段某个端口的距离
-<img src="static/img/p2line.png"></img>
+<img src="static/img/p2.png"></img>
 // 网上盗个图来看看
 double distance(Vec& p, Segment& s){
 
