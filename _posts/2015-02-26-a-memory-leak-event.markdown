@@ -19,7 +19,7 @@ tags:
 
 但是问题在于这3行signal代码, 写在app中, 就是gevent的 StreamServer构造好之后, 每次有请求来都会回掉的那个主入口函数.
 
-{{% highlight c++ %}}
+{{% highlight python %}}
 
 
 server = StreamServer(('0.0.0.0', port), apps, spawn=pool)
