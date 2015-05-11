@@ -23,7 +23,7 @@ tags:
 
 EventDispatcher只有几个简单的接口， Create, Register, Update:  
 Create 提供给需要创建事件使用， 2个重载函数, 原型如下：  
-```c++
+```c
   // 创建带args，调度器Update时，将使用这些args，执行事件接受者的ReceiveEvent方法
 	bool Create(uint32 frameDelay, EventReceiver* sender, EventReceiver* receiver, ulong arg1, ulong arg2);
 	
