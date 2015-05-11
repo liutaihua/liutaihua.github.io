@@ -21,7 +21,7 @@ tags:
 
 {{% highlight python %}}
 
-
+```python
 server = StreamServer(('0.0.0.0', port), apps, spawn=pool)
 
 ....
@@ -36,6 +36,7 @@ def apps(socket, address):
     port = int(sys.argv[1])
 
 ...
+```
 
 {{% endhighlight %}}
 
