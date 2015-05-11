@@ -23,6 +23,7 @@ tags:
 
 EventDispatcher只有几个简单的接口， Create, Register, Update:  
 Create 提供给需要创建事件使用， 2个重载函数, 原型如下：  
+<code>
 ```objective-c
   // 创建带args，调度器Update时，将使用这些args，执行事件接受者的ReceiveEvent方法
 	bool Create(uint32 frameDelay, EventReceiver* sender, EventReceiver* receiver, ulong arg1, ulong arg2);
@@ -30,6 +31,7 @@ Create 提供给需要创建事件使用， 2个重载函数, 原型如下：
 	// 创建一个callback类型的事件， Update时，将直接执行callback
   bool Create(uint32 frameDelay, std::function<void()> callback);
 ```
+</code>
 
 
 Dispatcher的Create会首先使用对象池alloc一个Event对象， 因为Event.h类型是个足够抽象的类型， 我们不需要每次都生成一个重复的Event对象实例， 比如一个事件它有相同的sender， 一样的receiver， 一样的args， 那么就不用重复初始化实例了， 我们使用自己构造的ObjectPool容器来初始化和free一个实例：
