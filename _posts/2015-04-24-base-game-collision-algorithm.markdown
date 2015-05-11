@@ -14,7 +14,7 @@ tags:
 
 一个是生物与scene世界的碰撞物品， 比如房子墙壁，地图围栏， 地图边界区域，用的是2D坐标的点到线段的距离， 结合点的owner本身的半径， 计算是否在碰撞范围内了。
 伪代码
-<pre><code>
+{{% highlight c++ %}}
 struct Line {Vec start, end;};
 typedef Line Segment;
 
@@ -69,7 +69,7 @@ bool IsCollSionWithObj(Vec& a, Vec& b) {
     return false;
 }
 
-</code></pre>
+{{% endhighlight %}}
 
 另外一个是生物与生物之间， 做的是检测二维坐标里点与点的距离， 再结合2点所属的owner的Radius， 计算两个点之间是否已经进入碰撞范围。调用 IsCollSionWithObj(a, b)计算。
 

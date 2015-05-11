@@ -18,12 +18,12 @@ tags:
 
 ## epoll的几个基本小知识：
 1, event struct结构：  
-<pre><code>
+{{% highlight c++ %}}
 struct epoll_event {
     uint32_t     events;      /* Epoll events */
     epoll_data_t data;        /* User data variable */
 };  
-</code></pre>
+{{% endhighlight %}}
 
 2, epoll的几个事件类型：
 EPOLLIN: 有新的数据流进来了;  

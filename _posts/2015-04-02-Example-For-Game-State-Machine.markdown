@@ -13,15 +13,15 @@ tags:
 状态机里的状态， 应该是可以互相转换的， 或者说整个状态系统， 是一个闭环。   
 
 一个状态机管理类， 数个状态类， 所有状态类都派生于一个状态基类， 状态机管理类会在实例化的时候初始化一系列的状态类，玩家产生状态变化， 应该使用状态机来记录， 而不是在Player类里面自己记录状态变量，比如死亡：
-<pre><code>
+{{% highlight c++ %}}
 Player->Die(); invoke: pStateMachine->Die(); invoke: currentState->Die();  invoke: pPlayer->doDead()
-</code></pre>
+{{% endhighlight %}}
 可以看到，Player自己产生Die， 从状态机绕一圈， 才最终执行自身的doDead。 这过程中，状态机内， 可以根据状态变化，产生某些逻辑， 更清楚的描绘了整个过程， 易于扩展。 比如施法状态， 比如行走状态；  
 
 从代码来大概看看结构和过程：
 
 1, 初始化Player的时候， 初始化一个属于Player的状态机
-<pre><code>
+{{% highlight c++ %}}
 Player::Player(int id, std::string name):
     user_id_(id),
     user_name_(name)
@@ -33,10 +33,10 @@ Player::Player(int id, std::string name):
     hp_ = kMaxHp;
     m_pStateMachine = new StateMachine(this);
 }
-</code></pre>
+{{% endhighlight %}}
 
 
-<pre><code>
+{{% highlight c++ %}}
 StateMachine::StateMachine(Player* pCreature) :
     m_pOwner(pCreature),
     m_ReadyState(this),
@@ -56,9 +56,9 @@ StateMachine::StateMachine(Player* pCreature) :
     m_curStateId = STATE_READY;
 
 }
-</code></pre>
+{{% endhighlight %}}
 2，上面代码， 状态机在初始化的时候， 会引用各个状态对象， 并存在自己的一个数组里， 这里的STATE_READY ...等是一个定义在头文件里的枚举：
-<pre><code>
+{{% highlight c++ %}}
 enum StateType
 {
     STATE_READY = 0,
@@ -70,17 +70,17 @@ enum StateType
     STATE_MOVE_CASTING,             // 移动施法状态
     STATE_COUNT
 };
-</code></pre>
+{{% endhighlight %}}
 
 
 3， 各个类都会有一个Update方法， 最先是Player在主函数后按帧执行Update， 调用链是:
-<pre><code>
+{{% highlight c++ %}}
 Player->Update()  invoke: pStateMachine->Update() invoke: currentState->Update()
-</code></pre>
+{{% endhighlight %}}
 可以在每个状态类的Update方法里， 实现所在这个状态时， 做的某些逻辑， 比如施法状态， Update的时候， 扣除玩家施法某个法术的读条时间等等。
 
 4， 状态类的基类大概是这样：
-<pre><code>
+{{% highlight c++ %}}
 class StateMachine;
 class Player;
 
@@ -111,11 +111,11 @@ public:
 protected:
   StateMachine* m_pStateMachine;
   Player*   m_pCreature;
-</code></pre>
+{{% endhighlight %}}
 
 
 5， 状态类的声明大概是这样：
-<pre><code>
+{{% highlight c++ %}}
 class DeadState : public IState
 {
 public:
@@ -129,5 +129,5 @@ public:
 
     uint32 KillerId;
 };
-</code></pre>
+{{% endhighlight %}}
 整个示例的代码在  https://github.com/liutaihua/gameStateMachine.git ， 在MAC OS 10.10, clang 6.0 xcode6.0下可直接编译通过， 里面包含一些简单的状态改变。按每秒20帧做循环

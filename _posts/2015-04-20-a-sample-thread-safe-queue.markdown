@@ -108,7 +108,7 @@ public:
 		m_lock.Release();
 		return ret;
 	}
-</code></pre>  
+{{% endhighlight %}}  
 
 一个线程安全的Mutex锁：  
 <pre></code>
@@ -128,7 +128,7 @@ public:
 	{
 		pthread_mutex_unlock(&mutex);
 	}
-</code></pre>
+{{% endhighlight %}}
 
   FastQueue<ByteBuffer*, Mutex> m_DataQueue;  
 

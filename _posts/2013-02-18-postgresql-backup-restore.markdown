@@ -11,7 +11,7 @@ tags:
 1,使用wal backup的方式,配置:
 
 
-<pre><code>
+{{% highlight c++ %}}
 wal_level = archive
 
 archive_mode = on
@@ -20,24 +20,24 @@ archive_command = 'test ! -f /data/postgresql/arch/%f &&
 
 cp %p /data/postgresql/arch/%f'
 \#archive_timeout = 600
-</code></pre>
+{{% endhighlight %}}
 
 配置后reload pgmaster进程, 此时可以使用psql连接pg后手工进行:
 select pg_start_backup('test');
 select pg_stop_backup();
 系统会将wal日志备份到配置文件指定的目录, 另外的方式,可以脚本化这个操作,同时将walbackup后的文件压缩打包:
 
-<pre><code>
+{{% highlight c++ %}}
 \#!/bin/sh
 
 if [ "$1" == "" ]; then
     $0 backupname
     exit 1
 fi
-</code></pre>
+{{% endhighlight %}}
 
 
-<pre><code>
+{{% highlight c++ %}}
 mkdir -p /data/postgresql/arch
 mkdir -p /data/postgresql/arch_gz
 
@@ -52,7 +52,7 @@ psql  -Upostgres<< STOP_BACKUP_END
 select pg_stop_backup();
 \q
 STOP_BACKUP_END
-</code></pre>
+{{% endhighlight %}}
 
 \#put backup file to ftp
 

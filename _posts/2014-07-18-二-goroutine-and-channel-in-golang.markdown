@@ -11,7 +11,7 @@ tags:
 
 
 上代码:
-<pre><code>
+{{% highlight c++ %}}
 package main
 import (
 	"fmt"
@@ -52,7 +52,7 @@ func main() {
 		number = <-nums    //#5
 	}
 }
-</code></pre>  
+{{% endhighlight %}}  
 也可以直接访问:   http://play.golang.org/p/gB7g_Aq5S8 看代码
 上面代码是使用goroutine + chan数据类型, 找出100以内的素数.  
 
@@ -72,7 +72,7 @@ func main() {
 
 
 4. 4, 当out信道有元素了, #5 位置的读取成功了,  number变量被赋值为3;  3这个素数被找出来了;  同时nums变量所代表的ch这个信道channel,  被filter2中的out信道所重赋值.   为了清晰的分清nums这个chan和filter 返回的chan, 可以将main部分代码改下为:  
-<pre><code>
+{{% highlight c++ %}}
 func main() {
 	nums := xrange()
 	number := <-nums
@@ -90,7 +90,7 @@ func main() {
 	}
 	
 }
-</code></pre>  
+{{% endhighlight %}}  
 
 
 5. 5, main方法中进入下一个循环,  带着number=3的情况再次调用filter,   产生了一个新的goroutine: filter3,  注意,此时的nums注意,nums已经是filter2中的out了, 有此filter3和filter2被一个信道串起来了, 这个信道究竟是哪个呢, 就是filter2返回的变量out,  由于filter2,  filter3这2个goroutine中涉及到同一个channel信道, 因此对于这个信道的操作会讲filter2, filter3变成串行逻辑;  这里给filter2和filter3之间串起来的信道虚拟一个命名叫做 filter2_pipe_filter3吧;    
@@ -120,7 +120,7 @@ type  node struct {
     left  *node(filter_NO-1).right
     right  *node(filter_NO+1).left
 }
-</code></pre>  
+{{% endhighlight %}}  
 
 这些node的left和它的上一个节点的right搭在一起形成一个golang的信道, 准确的说是golang的串行信道.  
 DONE
