@@ -1,5 +1,5 @@
 ---
-title: single thread mod to load player data
+title: single thread of data loader
 layout: post
 guid: urn:uuid:c3c62553-e00f-4853-bbbd-a2d269fcb22a
 description: an injection bug with python cpp
@@ -28,5 +28,18 @@ tags:
 主线程自己也保持一个Queue， m_FunctorQueue， 主线程将在每个tick， 进行queue.pop(), 获取到 PlayerCreationFunction后， create player；  
 
 data loader线程将获取队列内的LoadPlayerDatafunc执行，data获取完成后， 带着data作为参数， 将 PlayerCreationFunction 放入主线程的队列，等待最终的的player create;    
+
+1, boost bind the callback func: OnWorld_PlayerCreated;  
+
+2, call factory class->LoadPlayerAsync,使用带来的callback参数作为PlayerCreationFunction
+可调用类的参数， 生成一个可调用对象 pcf;  
+
+
+3, 第2步产生的pcf 和factory的PlayerLoadingThread
+一起bind， 放入data loader 线程， 等待队列取出执行;  
+
+4， 队列被pop出后， 开始在某个子线程执行PlayerLoadingThread方法了， PlayerLoadingThread会把从hades接口取到的数据，作为参数和pcf bind到一起产生一个新函数， 放入主线程的队列;  
+
+5, 主线程 game world 在update的时候，会取出主线程队列的任务， 执行pcf， 即PlayerCreation方法， 产生新的Player, 加载data到Player和pet等其他对象里。  至此， 完成player的登陆创建流程. 
 
 暂时记录到这里。
