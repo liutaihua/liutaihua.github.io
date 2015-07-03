@@ -30,5 +30,5 @@ tags:
     同时相关的还有：  
     The (directed) angle from vector1 to vector2 can be computed as：
     angle = atan2(vector2.y, vector2.x) - atan2(vector1.y, vector1.x);
-
+这里有一个讨论两点夹角相关的： <href src=http://stackoverflow.com/questions/21483999/using-atan2-to-find-angle-between-two-vectors>点击</href>
 </pre>
