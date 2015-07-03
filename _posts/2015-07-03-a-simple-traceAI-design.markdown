@@ -14,6 +14,7 @@ tags:
 
 先记录几个经常用到和碰到的三角函数和向量点计算时用到的tips:  
 
+<pre>
 有二维向量 A(x, y),  B(x, y)
 1,  向量的模， 可以看做是向量点在x,y坐标系下的向量长度,  记作 |A| = sqrt(A.x*A.x + A.y*A.y);
 2,  向量相减产生一个新的Vector point， A - B = (A.x-B.x, A.y-B.y), 一个新的Vec point;
@@ -29,3 +30,4 @@ tags:
     The (directed) angle from vector1 to vector2 can be computed as：
     angle = atan2(vector2.y, vector2.x) - atan2(vector1.y, vector1.x);
 
+</pre>
