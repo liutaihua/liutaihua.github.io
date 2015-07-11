@@ -32,3 +32,12 @@ protected:
 直接上脑图， 文字真是描述好费劲。
 
 <img src='static/img/RTTI.png'>RTTI</img>
+
+自定义的dynamic_cast是：
+
+{% highlight c++ %}
+#define MyDynamic_cast(classname, pkObject) \
+	(static_cast<classname*>(classname::DynamicCast(&classname::ms_RTTI, pkObject)))
+{% endhighlight %}
+使用
+Creature* ca = MyDynamic_cast(Creature, pMonster_A);
