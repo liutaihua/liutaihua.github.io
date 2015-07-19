@@ -11,4 +11,4 @@ tags:
 
 
 ## 游戏碰撞场景(一) CoWorld构建过程
-<a href="static/img/coworld.png">脑图</a>
+<img src="static/img/coworld.png">脑图</img>
