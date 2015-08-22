@@ -90,4 +90,4 @@ privite:
     std::map<string, weak_ptr<Foo> > objMap;
 }
 {{% endhighlight %}} 
-代码不严谨，没经过编译， 仅供自己理解.
+代码不严谨，没经过编译， 仅供自己理解. 学习资料参照 <a href="http://files.cppblog.com/Solstice/dtor_meets_mt.pdf">这里</a>
