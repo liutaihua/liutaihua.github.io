@@ -42,3 +42,6 @@ A, B是两个向量点，实现步骤是：
 6, 假如中间有碰撞， 则pos为最终发生了碰撞的某个点.
 {{% endhighlight %}}
 
+得恶补一下线性代数了，参照文档
+<a href="http://www.zhihu.com/question/19951858">zhihu</a>
+<a href="http://www.fundza.com/vectors/normalize/">vector normalizing</a>
