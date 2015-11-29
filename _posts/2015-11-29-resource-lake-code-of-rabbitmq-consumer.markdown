@@ -10,7 +10,7 @@ tags:
 
 # 一次rabbitmq没用好的资源泄露
 
-最近重写的一个使用rabbitmq做borker的服务， 很简单就是从mq获得msg， 如果有通过websocket连接上来的client， 那么就push给它。  
+最近重写的一个使用rabbitmq做borker的服务， 一个go-lang的小服务，支持多节点，很简单就是从mq获得msg， 如果有通过websocket连接上来的client， 那么就push给它。  
 
 具体的coding设计， 应该是一个client一个queue declare，结果被同事做成了一个连接过来就会新开一个临时的queue，好吧，  
 然后每次declare的时候都先open channel, 而且没有做好清理工作， 而且由于客户端本身不稳定会经常断线重连， 导致时间一长，造成相当大量的channel和queue, rabbitmq的max processes很快就被挤爆了， 只好临时把rabbitmq的max processes提高，  
