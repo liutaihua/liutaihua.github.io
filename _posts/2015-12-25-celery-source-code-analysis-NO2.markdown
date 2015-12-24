@@ -54,7 +54,7 @@ consumer初始过程：
             step = S(parent, **kwargs)
             steps[step.name] = step
             order.append(step)
-        self._debug('New boot order: {%s}',
+        self._debug('New boot order: %s',
                     ', '.join(s.alias for s in self.order))
         for step in order:
             step.include(parent)
