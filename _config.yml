@@ -10,6 +10,9 @@ atom-baseurl: "http://liutaihua.github.io"
 disqus: "gopherwood"
 
 navigations:
+  - title: Hot-Samer
+    #class: fa fa-list-ul
+    href: http://hot-samer.club
   - title: Archive
     class: fa fa-list-ul
     href: /archive.html

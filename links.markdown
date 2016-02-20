@@ -3,6 +3,7 @@ title: links
 layout: page
 ---
 
+[Hot-Samer](http://hot-samer.club)  
 [Beautifully Imperfect](http://becky.im)  
 [D&amp;V](http://kaix.in/daddy)  
 [Mirageyard.com](http://www.mirageyard.com)  
