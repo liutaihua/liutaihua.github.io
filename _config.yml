@@ -11,7 +11,7 @@ disqus: "gopherwood"
 
 navigations:
   - title: Hot-Samer
-    #class: fa fa-list-ul
+    class: fa fa-film
     href: http://hot-samer.club
   - title: Archive
     class: fa fa-list-ul
