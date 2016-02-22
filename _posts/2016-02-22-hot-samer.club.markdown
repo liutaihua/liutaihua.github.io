@@ -1,0 +1,26 @@
+---
+title: hot samer.club
+layout: post
+guid: urn:uuid:d83fef57-85db-4c3a-8d21-306cb79d6929
+description: hot samer.club
+tags:
+  - python
+  - same
+  - website
+---
+
+# Hot-Samer.club一个色色的samer网站
+
+<img src="/static/img/hot-samer.png"></img>img>  
+
+
+http://hot-samer.club/
+过年无聊，整理的一个图片网站
+代码在 <a href="https://github.com/liutaihua/hot-samer">这里</a>  
+
+图片均来自same应用  
+
+简单的通过 restful接口获取到帖子的数据， 然后存在elasticSearch里。
+然后展现出来。   
+
+同时加了个私信和搜寻samer，samer个人用户信息的页面
