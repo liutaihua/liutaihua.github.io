@@ -11,10 +11,10 @@ tags:
 
 # Hot-Samer.club一个色色的samer网站
 
-<img src="/static/img/hot-samer.png"></img>img>  
+<img src="/static/img/hot-samer.png"></img>  
 
 
-http://hot-samer.club/
+<a href="http://hot-samer.club/">hot-samer.club</a>
 过年无聊，整理的一个图片网站
 代码在 <a href="https://github.com/liutaihua/hot-samer">这里</a>  
 
