@@ -17,7 +17,7 @@ tags:
 
 但是， 这些算法， 都是基于本地内存存状态的， 当然， 我懂， 可以把几个主要状态，比如tokens, capacity都存redis里做同步，然后进程节点之间共享， 但它的fill操作，就是增加桶内令牌时， 如果也用redis， 会变成 N \* freq 的数量， N是节点数， 因为每个节点都往里面fill， 导致在横向扩展节点数量的时候， 配置没法很直观的配出需要的桶容量。 
 
-之前用redis也实现过一个不支持Burst的限速， 可是用的是key-value, 而且用了expire， 当大量用户的时候， 过多的key expire检测会导致redis性能过多消耗。
+之前用redis也实现过一个不支持Burst的限速， 可是用的是key-value, 而且用了expire， 当大量用户的时候， 过多的key expire浪费内存，主要是逼格不够高=。＝。
 
 还好， redis有sorted set， 可以用一种简便的方式来完成限速， 不过缺点是不支持Burst。 具体做法是： 
 
