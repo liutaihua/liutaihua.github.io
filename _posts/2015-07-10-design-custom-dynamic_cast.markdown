@@ -31,7 +31,7 @@ protected:
 {% endhighlight %}
 直接上脑图， 文字真是描述好费劲。
 
-<img src='static/img/RTTI.png'>RTTI</img>
+<img src='/static/img/RTTI.png'>RTTI</img>
 
 自定义的dynamic_cast是：
 
